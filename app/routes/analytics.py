@@ -1,0 +1,45 @@
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.core.dependencies import get_current_user, require_admin, require_instructor
+from app.core.response import api_success
+from app.db.database import get_db
+from app.db.models.user import User
+from app.services.analytics_service import AnalyticsService
+
+router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+
+@router.get("/course/{course_id}")
+def course_analytics(
+    course_id: UUID,
+    _: User = Depends(require_instructor),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.course_analytics(db, course_id)
+    return api_success(data)
+
+
+@router.get("/dashboard/me")
+def my_dashboard(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.user_dashboard(db, user.id)
+    return api_success(data)
+
+
+@router.get("/dashboard/global")
+def global_dashboard(
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.global_dashboard(db)
+    return api_success(data)
+
+
+@router.get("/active-users")
+def active_users(_: User = Depends(require_admin)):
+    return api_success({"active_users": AnalyticsService.get_active_users_count()})

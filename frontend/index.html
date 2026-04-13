@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LMS Dummy Frontend</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>LMS Dummy Frontend</h1>
+      <p>Quick API playground for your FastAPI backend.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Configuration</h2>
+        <div class="grid two">
+          <label>
+            API Base URL
+            <input id="baseUrl" value="http://127.0.0.1:8000/api/v1" />
+          </label>
+          <label>
+            Access Token
+            <input id="token" placeholder="Paste JWT here" />
+          </label>
+        </div>
+        <div class="row">
+          <button id="saveTokenBtn">Save Token</button>
+          <button id="clearTokenBtn" class="ghost">Clear Token</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Auth</h2>
+        <div class="grid three">
+          <label>Name<input id="regName" value="Test Student" /></label>
+          <label>Email<input id="regEmail" value="student@example.com" /></label>
+          <label>Password<input id="regPassword" value="Password123!" /></label>
+          <label>
+            Role
+            <select id="regRole">
+              <option value="student">student</option>
+              <option value="instructor">instructor</option>
+              <option value="admin">admin</option>
+            </select>
+          </label>
+          <div class="row align-end">
+            <button id="registerBtn">Register</button>
+          </div>
+        </div>
+
+        <div class="grid two mt">
+          <label>Email<input id="loginEmail" value="student@example.com" /></label>
+          <label>Password<input id="loginPassword" value="Password123!" /></label>
+        </div>
+        <div class="row">
+          <button id="loginBtn">Login</button>
+          <label class="inline">
+            Verify token
+            <input id="verifyToken" placeholder="Paste verify token from logs" />
+          </label>
+          <button id="verifyBtn" class="ghost">Verify Email</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Core APIs</h2>
+        <div class="row wrap">
+          <button id="meBtn">GET /users/me</button>
+          <button id="listUsersBtn">GET /users</button>
+          <button id="listCoursesBtn">GET /courses</button>
+          <button id="myCoursesBtn">GET /my-courses</button>
+          <button id="globalDashBtn">GET /analytics/dashboard/global</button>
+          <button id="myDashBtn">GET /analytics/dashboard/me</button>
+          <button id="activeUsersBtn">GET /analytics/active-users</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Course + Learning Flows</h2>
+        <div class="grid three">
+          <label>Course title<input id="courseTitle" value="Demo Course" /></label>
+          <label>Course description<input id="courseDesc" value="Dummy test course" /></label>
+          <div class="row align-end"><button id="createCourseBtn">Create Course</button></div>
+
+          <label>Course ID<input id="courseId" placeholder="UUID" /></label>
+          <label>Module title<input id="moduleTitle" value="Module 1" /></label>
+          <label>Order index<input id="moduleOrder" type="number" value="1" /></label>
+          <div class="row align-end"><button id="createModuleBtn">Create Module</button></div>
+
+          <label>Module ID<input id="moduleId" placeholder="UUID" /></label>
+          <label>Lesson title<input id="lessonTitle" value="Lesson 1" /></label>
+          <label>
+            Content type
+            <select id="lessonType">
+              <option value="text">text</option>
+              <option value="video">video</option>
+              <option value="scorm">scorm</option>
+            </select>
+          </label>
+          <label>Content URL<input id="lessonUrl" value="https://example.com/content" /></label>
+          <div class="row align-end"><button id="createLessonBtn">Create Lesson</button></div>
+
+          <label>Enroll Course ID<input id="enrollCourseId" placeholder="UUID" /></label>
+          <div class="row align-end"><button id="enrollBtn">Enroll</button></div>
+
+          <label>Progress Lesson ID<input id="progressLessonId" placeholder="UUID" /></label>
+          <label>
+            Completed
+            <select id="progressCompleted">
+              <option value="true">true</option>
+              <option value="false">false</option>
+            </select>
+          </label>
+          <div class="row align-end"><button id="progressBtn">Update Progress</button></div>
+          <label>Progress Course ID<input id="progressCourseId" placeholder="UUID" /></label>
+          <div class="row align-end"><button id="getProgressBtn">Get Progress</button></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>SCORM + Quiz + Analytics</h2>
+        <div class="grid three">
+          <label>SCORM Course ID<input id="scormCourseId" placeholder="UUID" /></label>
+          <label>SCORM ZIP<input id="scormZip" type="file" accept=".zip" /></label>
+          <div class="row align-end"><button id="uploadScormBtn">Upload SCORM</button></div>
+
+          <label>Track Course ID<input id="trackCourseId" placeholder="UUID" /></label>
+          <label>Track Lesson ID<input id="trackLessonId" placeholder="UUID" /></label>
+          <label>Status<input id="trackStatus" value="completed" /></label>
+          <label>Score<input id="trackScore" type="number" step="0.01" value="90" /></label>
+          <label>Time Spent (sec)<input id="trackTime" type="number" value="300" /></label>
+          <div class="row align-end"><button id="trackScormBtn">Track SCORM</button></div>
+
+          <label>Quiz Course ID<input id="quizCourseId" placeholder="UUID" /></label>
+          <div class="row align-end"><button id="getQuizBtn">Get Quiz</button></div>
+
+          <label>Submit Quiz ID<input id="submitQuizId" placeholder="UUID" /></label>
+          <label>
+            Answers JSON
+            <textarea id="quizAnswers" rows="4" placeholder='[{"question_id":"...","answer":"A"}]'></textarea>
+          </label>
+          <div class="row align-end"><button id="submitQuizBtn">Submit Quiz</button></div>
+
+          <label>Analytics Course ID<input id="analyticsCourseId" placeholder="UUID" /></label>
+          <div class="row align-end"><button id="courseAnalyticsBtn">Course Analytics</button></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Response Console</h2>
+        <pre id="output">Ready. Start clicking buttons 👇</pre>
+      </section>
+    </main>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
