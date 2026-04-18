@@ -7,7 +7,7 @@ from app.core.dependencies import get_current_user
 from app.core.response import api_success
 from app.db.database import get_db
 from app.db.models.user import User
-from app.schemas.course import CourseOut, EnrollmentOut
+from app.schemas.course import CourseOut
 from app.services.course_service import CourseService
 
 router = APIRouter(tags=["enrollments"])
@@ -20,7 +20,7 @@ def enroll_course(
     db: Session = Depends(get_db),
 ):
     enrollment = CourseService.enroll_user(db, current_user, course_id)
-    return api_success(EnrollmentOut.model_validate(enrollment).model_dump())
+    return api_success(CourseService.get_enrollment_payload(db, enrollment))
 
 
 @router.get("/my-courses")

@@ -3,156 +3,285 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LMS Dummy Frontend</title>
+    <title>UXIE LMS Portal</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header>
-      <h1>LMS Dummy Frontend</h1>
-      <p>Quick API playground for your FastAPI backend.</p>
-    </header>
-
-    <main>
-      <section class="card">
-        <h2>Configuration</h2>
-        <div class="grid two">
-          <label>
-            API Base URL
-            <input id="baseUrl" value="http://127.0.0.1:8000/api/v1" />
-          </label>
-          <label>
-            Access Token
-            <input id="token" placeholder="Paste JWT here" />
-          </label>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <h1>UXIE LMS</h1>
+          <p>Learning Portal</p>
         </div>
-        <div class="row">
-          <button id="saveTokenBtn">Save Token</button>
-          <button id="clearTokenBtn" class="ghost">Clear Token</button>
-        </div>
-      </section>
 
-      <section class="card">
-        <h2>Auth</h2>
-        <div class="grid three">
-          <label>Name<input id="regName" value="Test Student" /></label>
-          <label>Email<input id="regEmail" value="student@example.com" /></label>
-          <label>Password<input id="regPassword" value="Password123!" /></label>
-          <label>
-            Role
-            <select id="regRole">
-              <option value="student">student</option>
-              <option value="instructor">instructor</option>
-              <option value="admin">admin</option>
-            </select>
-          </label>
-          <div class="row align-end">
-            <button id="registerBtn">Register</button>
+        <nav class="nav" id="mainNav">
+          <button class="nav-btn active" data-view="authView">Authentication</button>
+          <button class="nav-btn" data-view="dashboardView">Dashboard</button>
+          <button class="nav-btn" data-view="catalogView">Course Catalog</button>
+          <button class="nav-btn" data-view="myLearningView">My Learning</button>
+          <button class="nav-btn role-instructor" data-view="authoringView">Instructor Studio</button>
+          <button class="nav-btn" data-view="scormView">SCORM Center</button>
+          <button class="nav-btn" data-view="quizView">Quiz Center</button>
+          <button class="nav-btn role-instructor" data-view="analyticsView">Analytics</button>
+          <button class="nav-btn role-admin" data-view="adminView">Admin</button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <small>FastAPI Backend · API v1</small>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <h2 id="viewTitle">Authentication</h2>
+            <p id="viewSubtitle">Create an account, login, and verify email.</p>
           </div>
-        </div>
+          <div class="user-chip" id="userChip">Not signed in</div>
+        </header>
 
-        <div class="grid two mt">
-          <label>Email<input id="loginEmail" value="student@example.com" /></label>
-          <label>Password<input id="loginPassword" value="Password123!" /></label>
-        </div>
-        <div class="row">
-          <button id="loginBtn">Login</button>
-          <label class="inline">
-            Verify token
-            <input id="verifyToken" placeholder="Paste verify token from logs" />
-          </label>
-          <button id="verifyBtn" class="ghost">Verify Email</button>
-        </div>
-      </section>
+        <section class="panel" id="authView">
+          <div class="card">
+            <h3>Connection & Session</h3>
+            <div class="grid two">
+              <label>API Base URL <input id="baseUrl" value="http://127.0.0.1:8000/api/v1" /></label>
+              <label>Access Token <input id="token" placeholder="JWT token" /></label>
+            </div>
+            <div class="row">
+              <button id="saveTokenBtn">Save Token</button>
+              <button id="clearTokenBtn" class="ghost">Clear Token</button>
+              <button id="logoutBtn" class="danger">Logout</button>
+            </div>
+          </div>
 
-      <section class="card">
-        <h2>Core APIs</h2>
-        <div class="row wrap">
-          <button id="meBtn">GET /users/me</button>
-          <button id="listUsersBtn">GET /users</button>
-          <button id="listCoursesBtn">GET /courses</button>
-          <button id="myCoursesBtn">GET /my-courses</button>
-          <button id="globalDashBtn">GET /analytics/dashboard/global</button>
-          <button id="myDashBtn">GET /analytics/dashboard/me</button>
-          <button id="activeUsersBtn">GET /analytics/active-users</button>
-        </div>
-      </section>
+          <div class="grid two">
+            <article class="card">
+              <h3>Register</h3>
+              <div class="grid two">
+                <label>Name <input id="regName" value="Test Student" /></label>
+                <label>Email <input id="regEmail" value="student@example.com" /></label>
+                <label>Password <input id="regPassword" type="password" value="Password123!" /></label>
+                <label>Role
+                  <select id="regRole">
+                    <option value="student">student</option>
+                    <option value="instructor">instructor</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row"><button id="registerBtn">Create Account</button></div>
+            </article>
 
-      <section class="card">
-        <h2>Course + Learning Flows</h2>
-        <div class="grid three">
-          <label>Course title<input id="courseTitle" value="Demo Course" /></label>
-          <label>Course description<input id="courseDesc" value="Dummy test course" /></label>
-          <div class="row align-end"><button id="createCourseBtn">Create Course</button></div>
+            <article class="card">
+              <h3>Login & Verify</h3>
+              <div class="grid two">
+                <label>Email <input id="loginEmail" value="student@example.com" /></label>
+                <label>Password <input id="loginPassword" type="password" value="Password123!" /></label>
+              </div>
+              <div class="row"><button id="loginBtn">Login</button></div>
+              <div class="grid one mt">
+                <label>Verification Token <input id="verifyToken" placeholder="Paste email verify token" /></label>
+              </div>
+              <div class="row"><button id="verifyBtn" class="ghost">Verify Email</button></div>
+            </article>
+          </div>
+        </section>
 
-          <label>Course ID<input id="courseId" placeholder="UUID" /></label>
-          <label>Module title<input id="moduleTitle" value="Module 1" /></label>
-          <label>Order index<input id="moduleOrder" type="number" value="1" /></label>
-          <div class="row align-end"><button id="createModuleBtn">Create Module</button></div>
+        <section class="panel hidden" id="dashboardView">
+          <div class="grid three" id="myDashboardCards"></div>
+          <div class="row">
+            <button id="refreshMeBtn">Refresh My Dashboard</button>
+            <button id="meBtn" class="ghost">Refresh My Profile</button>
+          </div>
+          <article class="card">
+            <h3>Current Profile</h3>
+            <pre id="profileOutput">Login to load profile.</pre>
+          </article>
+        </section>
 
-          <label>Module ID<input id="moduleId" placeholder="UUID" /></label>
-          <label>Lesson title<input id="lessonTitle" value="Lesson 1" /></label>
-          <label>
-            Content type
-            <select id="lessonType">
-              <option value="text">text</option>
-              <option value="video">video</option>
-              <option value="scorm">scorm</option>
-            </select>
-          </label>
-          <label>Content URL<input id="lessonUrl" value="https://example.com/content" /></label>
-          <div class="row align-end"><button id="createLessonBtn">Create Lesson</button></div>
+        <section class="panel hidden" id="catalogView">
+          <div class="row">
+            <button id="listCoursesBtn">Load Catalog</button>
+            <button id="myCoursesBtn" class="ghost">Load My Courses</button>
+          </div>
+          <div class="grid two">
+            <article class="card">
+              <h3>All Courses</h3>
+              <div id="catalogList" class="list"></div>
+            </article>
+            <article class="card">
+              <h3>My Courses</h3>
+              <div id="myCoursesList" class="list"></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Course Details</h3>
+            <div class="row">
+              <input id="courseDetailId" placeholder="Course UUID" />
+              <button id="loadCourseDetailBtn">Load Course</button>
+            </div>
+            <pre id="courseDetailOutput">Select a course to view details.</pre>
+          </article>
+        </section>
 
-          <label>Enroll Course ID<input id="enrollCourseId" placeholder="UUID" /></label>
-          <div class="row align-end"><button id="enrollBtn">Enroll</button></div>
+        <section class="panel hidden" id="myLearningView">
+          <div class="grid two">
+            <article class="card">
+              <h3>Enrollment</h3>
+              <label>Course ID <input id="enrollCourseId" placeholder="UUID" /></label>
+              <div class="row"><button id="enrollBtn">Enroll in Course</button></div>
+            </article>
 
-          <label>Progress Lesson ID<input id="progressLessonId" placeholder="UUID" /></label>
-          <label>
-            Completed
-            <select id="progressCompleted">
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
-          <div class="row align-end"><button id="progressBtn">Update Progress</button></div>
-          <label>Progress Course ID<input id="progressCourseId" placeholder="UUID" /></label>
-          <div class="row align-end"><button id="getProgressBtn">Get Progress</button></div>
-        </div>
-      </section>
+            <article class="card">
+              <h3>Progress Tracking</h3>
+              <div class="grid two">
+                <label>Lesson ID <input id="progressLessonId" placeholder="UUID" /></label>
+                <label>Completed
+                  <select id="progressCompleted">
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row"><button id="progressBtn">Update Progress</button></div>
+              <label class="mt">Course ID (to fetch progress) <input id="progressCourseId" placeholder="UUID" /></label>
+              <div class="row"><button id="getProgressBtn" class="ghost">Get Course Progress</button></div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Learning Activity Feed</h3>
+            <pre id="learningOutput">No activity yet.</pre>
+          </article>
+        </section>
 
-      <section class="card">
-        <h2>SCORM + Quiz + Analytics</h2>
-        <div class="grid three">
-          <label>SCORM Course ID<input id="scormCourseId" placeholder="UUID" /></label>
-          <label>SCORM ZIP<input id="scormZip" type="file" accept=".zip" /></label>
-          <div class="row align-end"><button id="uploadScormBtn">Upload SCORM</button></div>
+        <section class="panel hidden" id="authoringView">
+          <div class="grid two">
+            <article class="card">
+              <h3>Create Course</h3>
+              <label>Title <input id="courseTitle" value="Demo Course" /></label>
+              <label>Description <textarea id="courseDesc" rows="3">Build your learning path</textarea></label>
+              <div class="row"><button id="createCourseBtn">Create Course</button></div>
+            </article>
 
-          <label>Track Course ID<input id="trackCourseId" placeholder="UUID" /></label>
-          <label>Track Lesson ID<input id="trackLessonId" placeholder="UUID" /></label>
-          <label>Status<input id="trackStatus" value="completed" /></label>
-          <label>Score<input id="trackScore" type="number" step="0.01" value="90" /></label>
-          <label>Time Spent (sec)<input id="trackTime" type="number" value="300" /></label>
-          <div class="row align-end"><button id="trackScormBtn">Track SCORM</button></div>
+            <article class="card">
+              <h3>Create Module</h3>
+              <label>Course ID <input id="courseId" placeholder="UUID" /></label>
+              <label>Module Title <input id="moduleTitle" value="Module 1" /></label>
+              <label>Order Index <input id="moduleOrder" type="number" value="1" /></label>
+              <div class="row"><button id="createModuleBtn">Create Module</button></div>
+            </article>
 
-          <label>Quiz Course ID<input id="quizCourseId" placeholder="UUID" /></label>
-          <div class="row align-end"><button id="getQuizBtn">Get Quiz</button></div>
+            <article class="card">
+              <h3>Create Lesson</h3>
+              <label>Module ID <input id="moduleId" placeholder="UUID" /></label>
+              <label>Lesson Title <input id="lessonTitle" value="Lesson 1" /></label>
+              <label>Content Type
+                <select id="lessonType">
+                  <option value="text">text</option>
+                  <option value="video">video</option>
+                  <option value="scorm">scorm</option>
+                </select>
+              </label>
+              <label>Content URL <input id="lessonUrl" value="https://example.com/content" /></label>
+              <div class="row"><button id="createLessonBtn">Create Lesson</button></div>
+            </article>
 
-          <label>Submit Quiz ID<input id="submitQuizId" placeholder="UUID" /></label>
-          <label>
-            Answers JSON
-            <textarea id="quizAnswers" rows="4" placeholder='[{"question_id":"...","answer":"A"}]'></textarea>
-          </label>
-          <div class="row align-end"><button id="submitQuizBtn">Submit Quiz</button></div>
+            <article class="card">
+              <h3>SCORM Upload (Instructor/Admin)</h3>
+              <label>Course ID <input id="scormCourseId" placeholder="UUID" /></label>
+              <label>Lesson ID (optional) <input id="scormLessonId" placeholder="UUID" /></label>
+              <label>SCORM Title (optional) <input id="scormTitle" placeholder="My SCORM Package" /></label>
+              <label>ZIP File <input id="scormZip" type="file" accept=".zip" /></label>
+              <div class="row"><button id="uploadScormBtn">Upload Package</button></div>
+            </article>
+          </div>
+        </section>
 
-          <label>Analytics Course ID<input id="analyticsCourseId" placeholder="UUID" /></label>
-          <div class="row align-end"><button id="courseAnalyticsBtn">Course Analytics</button></div>
-        </div>
-      </section>
+        <section class="panel hidden" id="scormView">
+          <div class="grid two">
+            <article class="card">
+              <h3>Runtime Session</h3>
+              <label>Package ID <input id="runtimePackageId" placeholder="UUID" /></label>
+              <label>Registration ID <input id="runtimeRegistrationId" placeholder="UUID" /></label>
+              <div class="row">
+                <button id="initializeScormBtn">Initialize</button>
+                <button id="commitRuntimeBtn" class="ghost">Commit</button>
+                <button id="finishRuntimeBtn" class="ghost">Finish</button>
+              </div>
+            </article>
 
-      <section class="card">
-        <h2>Response Console</h2>
-        <pre id="output">Ready. Start clicking buttons 👇</pre>
-      </section>
-    </main>
+            <article class="card">
+              <h3>Runtime Data</h3>
+              <label>Key <input id="runtimeKey" value="cmi.core.score.raw" /></label>
+              <label>Value <input id="runtimeValue" value="85" /></label>
+              <div class="row">
+                <button id="setRuntimeBtn">Set Value</button>
+                <button id="getRuntimeBtn" class="ghost">Get Value</button>
+              </div>
+            </article>
+          </div>
+          <article class="card">
+            <h3>Launch SCORM Player</h3>
+            <div class="row">
+              <input id="playerPackageId" placeholder="Package UUID" />
+              <button id="openScormPlayerBtn">Open Player</button>
+            </div>
+            <pre id="scormOutput">Initialize a package and launch the player.</pre>
+          </article>
+        </section>
+
+        <section class="panel hidden" id="quizView">
+          <div class="grid two">
+            <article class="card">
+              <h3>Load Quiz by Course</h3>
+              <label>Course ID <input id="quizCourseId" placeholder="UUID" /></label>
+              <div class="row"><button id="getQuizBtn">Load Quiz</button></div>
+              <pre id="quizOutput">Quiz not loaded yet.</pre>
+            </article>
+
+            <article class="card">
+              <h3>Submit Quiz</h3>
+              <label>Quiz ID <input id="submitQuizId" placeholder="UUID" /></label>
+              <label>Answers JSON
+                <textarea id="quizAnswers" rows="7" placeholder='[{"question_id":"...","answer":"A"}]'></textarea>
+              </label>
+              <div class="row"><button id="submitQuizBtn">Submit Attempt</button></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel hidden" id="analyticsView">
+          <div class="row wrap">
+            <button id="myDashBtn">My Dashboard</button>
+            <button id="globalDashBtn" class="role-admin">Global Dashboard</button>
+            <button id="activeUsersBtn" class="role-admin">Active Users</button>
+          </div>
+          <article class="card mt">
+            <h3>Course Analytics</h3>
+            <div class="row">
+              <input id="analyticsCourseId" placeholder="Course UUID" />
+              <button id="courseAnalyticsBtn">Load Course Analytics</button>
+            </div>
+          </article>
+          <article class="card"><pre id="analyticsOutput">Analytics will appear here.</pre></article>
+        </section>
+
+        <section class="panel hidden" id="adminView">
+          <div class="row">
+            <button id="listUsersBtn">List Users</button>
+          </div>
+          <article class="card">
+            <h3>Users</h3>
+            <div id="usersList" class="list"></div>
+          </article>
+        </section>
+
+        <section class="card log-card">
+          <h3>Portal Activity Log</h3>
+          <pre id="output">Ready. Start with Authentication.</pre>
+        </section>
+      </main>
+    </div>
 
     <script src="./script.js"></script>
   </body>

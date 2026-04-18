@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from app.cache.cache_service import CacheService
@@ -19,6 +19,51 @@ settings = get_settings()
 
 
 class CourseService:
+    @staticmethod
+    def _serialize_course(db: Session, course: Course) -> dict:
+        instructor = db.get(User, course.instructor_id)
+        modules_count = db.scalar(
+            select(func.count(Module.id)).where(Module.course_id == course.id)
+        ) or 0
+        lessons_count = db.scalar(
+            select(func.count(Lesson.id))
+            .join(Module, Module.id == Lesson.module_id)
+            .where(Module.course_id == course.id)
+        ) or 0
+
+        return {
+            "id": str(course.id),
+            "title": course.title,
+            "description": course.description,
+            "instructor_id": str(course.instructor_id),
+            "instructor_name": instructor.name if instructor else None,
+            "modules_count": int(modules_count),
+            "lessons_count": int(lessons_count),
+            "created_at": course.created_at.isoformat() if course.created_at else None,
+        }
+
+    @staticmethod
+    def _can_access_course(db: Session, user: User, course_id: UUID) -> bool:
+        if user.role == "admin":
+            return True
+
+        course = db.get(Course, course_id)
+        if course is None:
+            return False
+
+        if user.role == "instructor" and course.instructor_id == user.id:
+            return True
+
+        enrollment_exists = db.scalar(
+            select(
+                exists().where(
+                    Enrollment.user_id == user.id,
+                    Enrollment.course_id == course_id,
+                )
+            )
+        )
+        return bool(enrollment_exists)
+
     @staticmethod
     def create_course(db: Session, instructor: User, payload: CourseCreate) -> Course:
         course = Course(
@@ -41,16 +86,7 @@ class CourseService:
             return cached
 
         courses = db.scalars(select(Course).order_by(Course.created_at.desc())).all()
-        serialized = [
-            {
-                "id": str(c.id),
-                "title": c.title,
-                "description": c.description,
-                "instructor_id": str(c.instructor_id),
-                "created_at": c.created_at.isoformat() if c.created_at else None,
-            }
-            for c in courses
-        ]
+        serialized = [CourseService._serialize_course(db, c) for c in courses]
         CacheService.set_json("courses:all", serialized, settings.cache_ttl_medium)
         return courses
 
@@ -65,18 +101,61 @@ class CourseService:
         if not course:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
+        structure = CourseService.get_course_structure(db, course_id)
+        payload = {
+            **CourseService._serialize_course(db, course),
+            "modules": structure,
+        }
+
         CacheService.set_json(
             cache_key,
-            {
-                "id": str(course.id),
-                "title": course.title,
-                "description": course.description,
-                "instructor_id": str(course.instructor_id),
-                "created_at": course.created_at.isoformat() if course.created_at else None,
-            },
+            payload,
             settings.cache_ttl_medium,
         )
-        return course
+        return payload
+
+    @staticmethod
+    def get_course_structure(db: Session, course_id: UUID) -> list[dict]:
+        course = db.get(Course, course_id)
+        if not course:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+        modules = db.scalars(
+            select(Module)
+            .where(Module.course_id == course_id)
+            .order_by(Module.order_index.asc(), Module.title.asc())
+        ).all()
+
+        module_ids = [module.id for module in modules]
+        lessons_by_module: dict[UUID, list[Lesson]] = {module.id: [] for module in modules}
+        if module_ids:
+            lessons = db.scalars(
+                select(Lesson)
+                .where(Lesson.module_id.in_(module_ids))
+                .order_by(Lesson.title.asc())
+            ).all()
+            for lesson in lessons:
+                lessons_by_module.setdefault(lesson.module_id, []).append(lesson)
+
+        return [
+            {
+                "id": str(module.id),
+                "course_id": str(module.course_id),
+                "title": module.title,
+                "order_index": module.order_index,
+                "lessons": [
+                    {
+                        "id": str(lesson.id),
+                        "module_id": str(lesson.module_id),
+                        "title": lesson.title,
+                        "content_type": lesson.content_type,
+                        "content_url": lesson.content_url,
+                    }
+                    for lesson in lessons_by_module.get(module.id, [])
+                ],
+            }
+            for module in modules
+        ]
 
     @staticmethod
     def create_module(db: Session, payload: ModuleCreate) -> Module:
@@ -94,6 +173,7 @@ class CourseService:
         db.refresh(module)
 
         CacheService.delete_key(f"course:{payload.course_id}")
+        CacheService.delete_key("courses:all")
         return module
 
     @staticmethod
@@ -113,6 +193,7 @@ class CourseService:
         db.refresh(lesson)
 
         CacheService.delete_key(f"course:{module.course_id}")
+        CacheService.delete_key("courses:all")
         return lesson
 
     @staticmethod
@@ -138,6 +219,23 @@ class CourseService:
         return enrollment
 
     @staticmethod
+    def get_enrollment_payload(db: Session, enrollment: Enrollment) -> dict:
+        course = db.get(Course, enrollment.course_id)
+        return {
+            "id": str(enrollment.id),
+            "user_id": str(enrollment.user_id),
+            "course_id": str(enrollment.course_id),
+            "enrolled_at": enrollment.enrolled_at.isoformat() if enrollment.enrolled_at else None,
+            "course": {
+                "id": str(course.id),
+                "title": course.title,
+            }
+            if course
+            else None,
+            "message": f"Enrolled in {course.title}" if course else "Enrolled",
+        }
+
+    @staticmethod
     def get_my_courses(db: Session, user: User) -> list[Course]:
         stmt = (
             select(Course)
@@ -149,6 +247,20 @@ class CourseService:
 
     @staticmethod
     def update_progress(db: Session, user: User, payload: ProgressUpdate) -> Progress:
+        lesson = db.get(Lesson, payload.lesson_id)
+        if lesson is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+        module = db.get(Module, lesson.module_id)
+        if module is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Module not found")
+
+        if not CourseService._can_access_course(db, user, module.course_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this lesson",
+            )
+
         progress = db.scalar(
             select(Progress).where(
                 Progress.user_id == user.id,
@@ -176,14 +288,98 @@ class CourseService:
         return progress
 
     @staticmethod
-    def get_course_progress(db: Session, user: User, course_id: UUID) -> list[Progress]:
+    def get_course_progress(db: Session, user: User, course_id: UUID) -> list[dict]:
+        if not CourseService._can_access_course(db, user, course_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this course",
+            )
+
         stmt = (
             select(Progress)
             .join(Lesson, Lesson.id == Progress.lesson_id)
             .join(Module, Module.id == Lesson.module_id)
             .where(Module.course_id == course_id, Progress.user_id == user.id)
         )
-        return db.scalars(stmt).all()
+        progress_rows = db.scalars(stmt).all()
+
+        course = db.get(Course, course_id)
+        lesson_lookup = {
+            row.id: row
+            for row in db.scalars(
+                select(Lesson)
+                .join(Module, Module.id == Lesson.module_id)
+                .where(Module.course_id == course_id)
+            ).all()
+        }
+        module_lookup = {
+            row.id: row
+            for row in db.scalars(select(Module).where(Module.course_id == course_id)).all()
+        }
+
+        completion = CourseService.get_course_completion_percentage(db, user.id, course_id)
+
+        return [
+            {
+                "user_id": str(row.user_id),
+                "lesson_id": str(row.lesson_id),
+                "lesson_title": lesson_lookup.get(row.lesson_id).title
+                if lesson_lookup.get(row.lesson_id)
+                else None,
+                "module_id": str(lesson_lookup.get(row.lesson_id).module_id)
+                if lesson_lookup.get(row.lesson_id)
+                else None,
+                "module_title": module_lookup.get(lesson_lookup.get(row.lesson_id).module_id).title
+                if lesson_lookup.get(row.lesson_id)
+                and module_lookup.get(lesson_lookup.get(row.lesson_id).module_id)
+                else None,
+                "course_id": str(course_id),
+                "course_title": course.title if course else None,
+                "completed": row.completed,
+                "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+                "completion_percentage": completion,
+            }
+            for row in progress_rows
+        ]
+
+    @staticmethod
+    def get_course_completion_percentage(db: Session, user_id: UUID, course_id: UUID) -> int:
+        total_lessons = db.scalar(
+            select(func.count(Lesson.id))
+            .join(Module, Module.id == Lesson.module_id)
+            .where(Module.course_id == course_id)
+        ) or 0
+
+        completed_lessons = db.scalar(
+            select(func.count(Progress.id))
+            .join(Lesson, Lesson.id == Progress.lesson_id)
+            .join(Module, Module.id == Lesson.module_id)
+            .where(
+                Module.course_id == course_id,
+                Progress.user_id == user_id,
+                Progress.completed.is_(True),
+            )
+        ) or 0
+
+        quiz = db.scalar(select(Quiz).where(Quiz.course_id == course_id))
+        has_quiz = quiz is not None
+        quiz_attempted = False
+        if quiz is not None:
+            quiz_attempted = bool(
+                db.scalar(
+                    select(exists().where(
+                        QuizAttempt.quiz_id == quiz.id,
+                        QuizAttempt.user_id == user_id,
+                    ))
+                )
+            )
+
+        denominator = int(total_lessons) + (1 if has_quiz else 0)
+        if denominator <= 0:
+            return 0
+
+        numerator = int(completed_lessons) + (1 if quiz_attempted else 0)
+        return max(0, min(100, round((numerator / denominator) * 100)))
 
     @staticmethod
     def get_quiz_by_course(db: Session, course_id: UUID) -> Quiz:
@@ -217,6 +413,44 @@ class CourseService:
         CacheService.delete_key(f"dashboard:user:{user.id}")
         CacheService.delete_key("dashboard:global")
         return attempt
+
+    @staticmethod
+    def build_quiz_payload(db: Session, quiz: Quiz, include_answers: bool = False) -> dict:
+        course = db.get(Course, quiz.course_id)
+        questions = db.scalars(select(Question).where(Question.quiz_id == quiz.id)).all()
+        payload_questions = [
+            {
+                "id": str(question.id),
+                "question": question.question,
+                "options": question.options,
+                **({"correct_answer": question.correct_answer} if include_answers else {}),
+            }
+            for question in questions
+        ]
+        return {
+            "id": str(quiz.id),
+            "course_id": str(quiz.course_id),
+            "course_title": course.title if course else None,
+            "question_count": len(payload_questions),
+            "questions": payload_questions,
+        }
+
+    @staticmethod
+    def build_quiz_attempt_payload(db: Session, attempt: QuizAttempt) -> dict:
+        quiz = db.get(Quiz, attempt.quiz_id)
+        course = db.get(Course, quiz.course_id) if quiz else None
+        return {
+            "id": str(attempt.id),
+            "user_id": str(attempt.user_id),
+            "quiz_id": str(attempt.quiz_id),
+            "course_id": str(quiz.course_id) if quiz else None,
+            "quiz_title": f"Quiz for {course.title}" if course else "Quiz",
+            "course_title": course.title if course else None,
+            "score": float(attempt.score),
+            "passed": float(attempt.score) >= 60.0,
+            "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None,
+            "message": f"Score: {round(float(attempt.score), 2)} / 100",
+        }
 
     @staticmethod
     def get_average_course_score(db: Session, course_id: UUID) -> float:

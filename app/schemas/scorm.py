@@ -9,26 +9,59 @@ class ScormPackageOut(BaseModel):
 
     id: UUID
     course_id: UUID
+    lesson_id: UUID | None
+    title: str
+    version: str
+    launch_file: str
+    extracted_path: str
     file_path: str
     created_at: datetime
 
 
-class ScormTrackCreate(BaseModel):
-    course_id: UUID
-    lesson_id: UUID
-    completion_status: str = Field(min_length=1, max_length=50)
-    score: float | None = None
-    time_spent: int = Field(default=0, ge=0)
+class ScormActivityOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    package_id: UUID
+    identifier: str
+    title: str
+    launch_url: str
 
 
-class ScormTrackingOut(BaseModel):
+class ScormRegistrationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     user_id: UUID
-    course_id: UUID
-    lesson_id: UUID
-    completion_status: str
-    score: float | None
-    time_spent: int
-    last_accessed: datetime
+    package_id: UUID
+    started_at: datetime
+    completed_at: datetime | None
+    status: str
+
+
+class ScormInitializeOut(BaseModel):
+    session_id: UUID
+    registration: ScormRegistrationOut
+    package: ScormPackageOut
+    activities: list[ScormActivityOut]
+    runtime_data: dict[str, str]
+
+
+class ScormRuntimeSetRequest(BaseModel):
+    key: str = Field(min_length=1, max_length=255)
+    value: str = Field(default="", max_length=4096)
+
+
+class ScormRuntimeSetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    registration_id: UUID
+    key: str
+    value: str
+    updated_at: datetime
+
+
+class ScormRuntimeValuesOut(BaseModel):
+    registration_id: UUID
+    data: dict[str, str]

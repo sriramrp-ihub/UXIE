@@ -41,9 +41,13 @@ def list_courses(db: Session = Depends(get_db)):
 @router.get("/{course_id}")
 def get_course(course_id: UUID, db: Session = Depends(get_db)):
     course = CourseService.get_course(db, course_id)
-    if isinstance(course, dict):
-        return api_success(course)
-    return api_success(CourseOut.model_validate(course).model_dump())
+    return api_success(course)
+
+
+@router.get("/{course_id}/structure")
+def get_course_structure(course_id: UUID, db: Session = Depends(get_db)):
+    modules = CourseService.get_course_structure(db, course_id)
+    return api_success({"course_id": str(course_id), "modules": modules})
 
 
 @router.post("/modules", status_code=status.HTTP_201_CREATED)

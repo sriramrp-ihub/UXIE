@@ -18,6 +18,7 @@ from app.routes.courses import router as courses_router
 from app.routes.enrollments import router as enrollments_router
 from app.routes.progress import router as progress_router
 from app.routes.quiz import router as quiz_router
+from app.routes.scorm import admin_router as admin_scorm_router
 from app.routes.scorm import router as scorm_router
 from app.routes.users import router as users_router
 
@@ -114,6 +115,7 @@ app.include_router(users_router, prefix=settings.api_prefix)
 app.include_router(courses_router, prefix=settings.api_prefix)
 app.include_router(enrollments_router, prefix=settings.api_prefix)
 app.include_router(scorm_router, prefix=settings.api_prefix)
+app.include_router(admin_scorm_router, prefix=settings.api_prefix)
 app.include_router(progress_router, prefix=settings.api_prefix)
 app.include_router(quiz_router, prefix=settings.api_prefix)
 app.include_router(analytics_router, prefix=settings.api_prefix)

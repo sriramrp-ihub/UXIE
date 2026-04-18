@@ -72,3 +72,4 @@ class Lesson(Base):
     scorm_trackings = relationship(
         "ScormTracking", back_populates="lesson", cascade="all, delete-orphan"
     )
+    scorm_packages = relationship("ScormPackage", back_populates="lesson")

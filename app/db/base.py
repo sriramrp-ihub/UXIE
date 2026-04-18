@@ -3,7 +3,13 @@ from app.db.models.course import Course, Lesson, Module
 from app.db.models.enrollment import Enrollment
 from app.db.models.progress import Progress
 from app.db.models.quiz import Question, Quiz, QuizAttempt
-from app.db.models.scorm import ScormPackage, ScormTracking
+from app.db.models.scorm import (
+    ScormActivity,
+    ScormPackage,
+    ScormRegistration,
+    ScormRuntimeData,
+    ScormTracking,
+)
 from app.db.models.user import User
 
 __all__ = [
@@ -14,6 +20,9 @@ __all__ = [
     "Lesson",
     "Enrollment",
     "ScormPackage",
+    "ScormActivity",
+    "ScormRegistration",
+    "ScormRuntimeData",
     "ScormTracking",
     "Progress",
     "Quiz",

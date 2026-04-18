@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SCORM 1.2 Player</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        height: 100vh;
+      }
+      header {
+        padding: 10px 14px;
+        border-bottom: 1px solid #d7d7d7;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      header h1 {
+        font-size: 15px;
+        margin: 0;
+      }
+      #status {
+        font-size: 12px;
+        opacity: 0.85;
+      }
+      #playerFrame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>SCORM 1.2 Player</h1>
+      <div id="status">Initializing...</div>
+    </header>
+    <iframe id="playerFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    <script src="./scorm-player.js"></script>
+  </body>
+</html>
