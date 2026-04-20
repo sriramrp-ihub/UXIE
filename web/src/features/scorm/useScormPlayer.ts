@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { scormApi } from "../../lib/api/scorm.api";
@@ -32,6 +32,20 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
   const initializedRef = useRef(false);
   const lastErrorRef = useRef("0");
   const registrationIdRef = useRef<string | null>(null);
+  const apiBridgeRef = useRef<ScormApiBridge | null>(null);
+
+  const bindApiToFrame = useCallback(() => {
+    const bridge = apiBridgeRef.current;
+    if (!bridge) return;
+
+    try {
+      if (frameRef.current?.contentWindow) {
+        (frameRef.current.contentWindow as Window & { API?: ScormApiBridge }).API = bridge;
+      }
+    } catch {
+      // Cross-origin fallback; SCO can use window.parent.API.
+    }
+  }, [frameRef]);
 
   useEffect(() => {
     if (!packageId) return;
@@ -50,9 +64,6 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
       const normalizedLaunch = resolvedPath.startsWith("/") ? resolvedPath : `/${resolvedPath}`;
       const url = `${window.location.origin}${normalizedLaunch}`;
       setCurrentLaunchUrl(url);
-      if (frameRef.current) {
-        frameRef.current.src = url;
-      }
       setStatus(`SCORM initialized (${initialized.session_id})`);
     };
 
@@ -101,20 +112,6 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
         }
         const registrationId = registrationIdRef.current;
         if (registrationId) {
-          const lessonStatus = runtimeRef.current["cmi.core.lesson_status"]?.trim().toLowerCase();
-          const completionStatus = runtimeRef.current["cmi.completion_status"]?.trim().toLowerCase();
-          const hasCompletionSignal =
-            [lessonStatus, completionStatus].filter(Boolean).some((value) =>
-              ["completed", "passed"].includes(String(value))
-            );
-
-          if (!hasCompletionSignal) {
-            runtimeRef.current["cmi.core.lesson_status"] = "completed";
-            runtimeRef.current["cmi.completion_status"] = "completed";
-            dirtyKeysRef.current.add("cmi.core.lesson_status");
-            dirtyKeysRef.current.add("cmi.completion_status");
-          }
-
           setStatus("Finalizing SCORM session...");
           flush()
             .then(() => scormApi.commit(registrationId))
@@ -176,27 +173,21 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
       LMSGetLastError: () => lastErrorRef.current,
     };
 
+    apiBridgeRef.current = apiBridge;
+
     (window as Window & { API?: ScormApiBridge }).API = apiBridge;
+    bindApiToFrame();
 
-    const onFrameLoad = () => {
-      try {
-        if (frameRef.current?.contentWindow) {
-          (frameRef.current.contentWindow as Window & { API?: ScormApiBridge }).API = apiBridge;
-        }
-      } catch {
-        // Cross-origin fallback; SCO can use window.parent.API.
-      }
+    return () => {
+      apiBridgeRef.current = null;
     };
-
-    const frameNode = frameRef.current;
-    frameNode?.addEventListener("load", onFrameLoad);
-    return () => frameNode?.removeEventListener("load", onFrameLoad);
-  }, [frameRef, queryClient]);
+  }, [bindApiToFrame, frameRef, queryClient]);
 
   return {
     status,
     currentLaunchUrl,
     registrationId,
     report,
+    bindApiToFrame,
   };
 }

@@ -22,6 +22,16 @@ def course_analytics(
     return api_success(data)
 
 
+@router.get("/course/{course_id}/detailed")
+def course_detailed_analytics(
+    course_id: UUID,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.course_detailed_analytics(db, course_id)
+    return api_success(data)
+
+
 @router.get("/dashboard/me")
 def my_dashboard(
     user: User = Depends(get_current_user),

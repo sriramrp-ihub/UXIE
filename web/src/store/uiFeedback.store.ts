@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+import { createRuntimeId } from "../lib/runtime/environment";
+
 export type ToastType = "loading" | "success" | "error";
 
 export interface ToastItem {
@@ -17,13 +19,13 @@ interface UiFeedbackState {
 }
 
 function scheduleRemove(id: string, removeToast: (id: string) => void, durationMs: number) {
-  window.setTimeout(() => removeToast(id), durationMs);
+  globalThis.setTimeout(() => removeToast(id), durationMs);
 }
 
 export const useUiFeedbackStore = create<UiFeedbackState>((set, get) => ({
   toasts: [],
   pushToast: (toast, durationMs = 3500) => {
-    const id = crypto.randomUUID();
+    const id = createRuntimeId("toast");
     set((state) => ({
       toasts: [...state.toasts, { id, ...toast }],
     }));

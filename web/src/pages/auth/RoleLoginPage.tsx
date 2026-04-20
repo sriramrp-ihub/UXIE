@@ -65,6 +65,11 @@ export default function RoleLoginPage({ role }: RoleLoginPageProps) {
               }
               navigate(roleDashboardPath(role), { replace: true });
             } catch (err) {
+              console.error("[Auth] Login failed", {
+                email: form.email,
+                role,
+                error: err,
+              });
               const message = getErrorMessage(err);
               if (message === "Email is not verified") {
                 setError("Email is not verified. Please complete email verification, then login again.");

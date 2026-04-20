@@ -22,6 +22,14 @@ export function useCourseAnalytics(courseId: string, enabled = false) {
   });
 }
 
+export function useDetailedCourseAnalytics(courseId: string, enabled = false) {
+  return useQuery({
+    queryKey: ["analytics", "course", courseId, "detailed"],
+    queryFn: () => analyticsApi.detailedCourse(courseId),
+    enabled: !!courseId && enabled,
+  });
+}
+
 export function useTimeSpent(userId: string, enabled = true) {
   return useQuery({
     queryKey: ["analytics", "time-spent", userId],

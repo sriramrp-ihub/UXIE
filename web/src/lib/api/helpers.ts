@@ -9,6 +9,8 @@ export function unwrap<T>(response: AxiosResponse<ApiEnvelope<T>>): T {
 export function getErrorMessage(error: unknown): string {
   if (typeof error === "object" && error !== null) {
     const maybe = error as {
+      message?: string;
+      code?: string;
       response?: {
         data?: {
           error?: { message?: string } | string;
@@ -29,6 +31,14 @@ export function getErrorMessage(error: unknown): string {
     if (typeof envelopeError === "string") return envelopeError;
     if (envelopeError && typeof envelopeError === "object" && "message" in envelopeError) {
       return envelopeError.message || "Request failed";
+    }
+
+    if (!maybe.response && maybe.message) {
+      return `Network error: ${maybe.message}. Check API URL/connectivity.`;
+    }
+
+    if (maybe.code === "ECONNABORTED") {
+      return "Request timed out. Backend may be unreachable.";
     }
   }
   return "Request failed";
