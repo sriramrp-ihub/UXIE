@@ -65,3 +65,11 @@ class ScormRuntimeSetOut(BaseModel):
 class ScormRuntimeValuesOut(BaseModel):
     registration_id: UUID
     data: dict[str, str]
+
+
+class ScormReportOut(BaseModel):
+    completion: int
+    status: str
+    score: float | None
+    timeSpent: int
+    lastAccessed: datetime

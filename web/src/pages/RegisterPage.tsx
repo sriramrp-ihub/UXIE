@@ -10,7 +10,7 @@ export default function RegisterPage() {
     name: "Test Student",
     email: "student@example.com",
     password: "Password123!",
-    role: "student" as "student" | "instructor" | "admin",
+    role: "student" as "student" | "admin",
   });
 
   return (
@@ -44,7 +44,6 @@ export default function RegisterPage() {
               onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as typeof form.role }))}
             >
               <option value="student">Student</option>
-              <option value="instructor">Instructor</option>
               <option value="admin">Admin</option>
             </select>
           </div>

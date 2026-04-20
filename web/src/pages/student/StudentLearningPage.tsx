@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { EmptyState } from "../../components/EmptyState";
@@ -24,6 +24,34 @@ export default function StudentLearningPage() {
   const updateProgress = useUpdateProgressMutation();
 
   const completionRate = progress.data?.completion_percentage ?? 0;
+
+  useEffect(() => {
+    if (selectedCourseId) {
+      return;
+    }
+    const firstCourseId = myCourses.data?.[0]?.id;
+    if (firstCourseId) {
+      setSelectedCourseId(firstCourseId);
+    }
+  }, [myCourses.data, selectedCourseId]);
+
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setSelectedLessonId("");
+      return;
+    }
+
+    const lessons = (structure.data?.modules ?? []).flatMap((module) => module.lessons);
+    if (!lessons.length) {
+      setSelectedLessonId("");
+      return;
+    }
+
+    const lessonStillExists = lessons.some((lesson) => lesson.id === selectedLessonId);
+    if (!lessonStillExists) {
+      setSelectedLessonId(lessons[0].id);
+    }
+  }, [selectedCourseId, structure.data, selectedLessonId]);
 
   const lessonOptions = useMemo(() => {
     return (structure.data?.modules ?? []).flatMap((module) =>
@@ -73,11 +101,23 @@ export default function StudentLearningPage() {
             </select>
           </div>
           <div>
-            <label className="label">Completed</label>
-            <select className="input" value={String(completed)} onChange={(e) => setCompleted(e.target.value === "true")}>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
+            <label className="label">Progress Status</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className={completed ? "btn" : "btn-secondary"}
+                onClick={() => setCompleted(true)}
+              >
+                Completed
+              </button>
+              <button
+                type="button"
+                className={!completed ? "btn" : "btn-secondary"}
+                onClick={() => setCompleted(false)}
+              >
+                In Progress
+              </button>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">
@@ -92,6 +132,12 @@ export default function StudentLearningPage() {
             Open Lesson Viewer
           </Link>
         </div>
+        {updateProgress.isSuccess ? (
+          <p className="text-sm text-emerald-300">Progress saved successfully.</p>
+        ) : null}
+        {updateProgress.isError ? (
+          <p className="text-sm text-red-300">Could not save progress. Please try again.</p>
+        ) : null}
       </section>
 
       <section className="card">
@@ -110,7 +156,6 @@ export default function StudentLearningPage() {
               <div key={pkg.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-700 p-3 text-sm">
                 <div>
                   <p className="font-medium text-slate-100">{pkg.title}</p>
-                  <p className="text-xs text-slate-400">Package ID: {pkg.id}</p>
                   <p className="text-xs text-slate-400">Launch: {pkg.launch_file}</p>
                 </div>
                 <Link className="btn" to={`/student/scorm/player/${pkg.id}`}>
@@ -128,7 +173,7 @@ export default function StudentLearningPage() {
           {(progress.data?.items ?? []).length ? (
             progress.data!.items.map((p) => (
               <div key={p.lesson_id} className="rounded-lg border border-slate-700 p-3 text-sm">
-                <p>Lesson: {p.lesson_title ?? p.lesson_id}</p>
+                <p>Lesson: {p.lesson_title ?? "Lesson"}</p>
                 <p>Module: {p.module_title ?? "-"}</p>
                 <p>Status: {p.completed ? "Completed" : "In Progress"}</p>
                 <p>Completed At: {p.completed_at ? new Date(p.completed_at).toLocaleString() : "-"}</p>

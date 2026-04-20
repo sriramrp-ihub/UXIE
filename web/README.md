@@ -38,20 +38,17 @@ Design rules followed:
 Dedicated login flows:
 
 - `/login/student`
-- `/login/mentor`
 - `/login/admin`
 
 Dedicated role apps:
 
 - `/student/*` — Learner experience
-- `/mentor/*` — Mentor experience
-- `/admin/*` — Admin experience
+- `/admin/*` — Admin experience (includes course creation and management)
 
 Role redirects after authentication:
 
 - student → `/student/dashboard`
-- instructor (mentor) → `/mentor/dashboard`
-- admin → `/admin/dashboard`
+- instructor/admin → `/admin/dashboard`
 
 ## Setup
 
@@ -81,8 +78,7 @@ If missing, default API URL above is used.
 
 - Auth: role-specific login routes + session persistence + role mismatch blocking
 - Student app: dashboard, course catalog, my learning, quiz attempts, profile, lesson viewer, SCORM player
-- Mentor app: dashboard, course/module/lesson management, SCORM upload management, quiz management shell, student monitoring
-- Admin app: global dashboard, user management, course oversight, platform analytics
+- Admin app: global dashboard, user management, course creation/module/lesson/SCORM upload management, course oversight, platform analytics
 - SCORM runtime bridge in student player (`window.API` for initialize/get/set/commit/finish)
 
 ## Notes

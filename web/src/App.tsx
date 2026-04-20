@@ -5,7 +5,6 @@ import { ErrorState } from "./components/ErrorState";
 import { LoadingState } from "./components/LoadingState";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
 import { AdminLayout } from "./components/layouts/AdminLayout";
-import { MentorLayout } from "./components/layouts/MentorLayout";
 import { StudentLayout } from "./components/layouts/StudentLayout";
 import { useAuthBootstrap } from "./hooks/useAuthBootstrap";
 import { useAuthStore } from "./store/auth.store";
@@ -23,11 +22,7 @@ const StudentProfilePage = lazy(() => import("./pages/student/StudentProfilePage
 const LessonViewerPage = lazy(() => import("./pages/LessonViewerPage"));
 const ScormPlayerPage = lazy(() => import("./pages/ScormPlayerPage"));
 
-const MentorDashboardPage = lazy(() => import("./pages/mentor/MentorDashboardPage"));
-const MentorCourseManagementPage = lazy(() => import("./pages/mentor/MentorCourseManagementPage"));
-const MentorScormManagementPage = lazy(() => import("./pages/mentor/MentorScormManagementPage"));
-const MentorQuizManagementPage = lazy(() => import("./pages/mentor/MentorQuizManagementPage"));
-const MentorStudentMonitoringPage = lazy(() => import("./pages/mentor/MentorStudentMonitoringPage"));
+const AdminCourseManagementPage = lazy(() => import("./pages/admin/AdminCourseManagementPage"));
 
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
 const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
@@ -47,11 +42,9 @@ function App() {
       <Routes>
         <Route path="/auth/login" element={<Navigate to="/login/student" replace />} />
         <Route path="/auth/login/student" element={<Navigate to="/login/student" replace />} />
-        <Route path="/auth/login/mentor" element={<Navigate to="/login/mentor" replace />} />
         <Route path="/auth/login/admin" element={<Navigate to="/login/admin" replace />} />
 
         <Route path="/login/student" element={<RoleLoginPage role="student" />} />
-        <Route path="/login/mentor" element={<RoleLoginPage role="instructor" />} />
         <Route path="/login/admin" element={<RoleLoginPage role="admin" />} />
         <Route path="/auth/register" element={<RegisterPage />} />
 
@@ -67,20 +60,12 @@ function App() {
           <Route path="scorm/player/:packageId" element={<ScormPlayerPage />} />
         </Route>
 
-        <Route path="/mentor" element={<RoleProtectedRoute role="instructor"><MentorLayout /></RoleProtectedRoute>}>
-          <Route index element={<Navigate to="/mentor/dashboard" replace />} />
-          <Route path="dashboard" element={<MentorDashboardPage />} />
-          <Route path="courses" element={<MentorCourseManagementPage />} />
-          <Route path="scorm" element={<MentorScormManagementPage />} />
-          <Route path="quizzes" element={<MentorQuizManagementPage />} />
-          <Route path="students" element={<MentorStudentMonitoringPage />} />
-        </Route>
-
         <Route path="/admin" element={<RoleProtectedRoute role="admin"><AdminLayout /></RoleProtectedRoute>}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="courses" element={<AdminCoursesPage />} />
+          <Route path="course-management" element={<AdminCourseManagementPage />} />
           <Route path="analytics" element={<AdminAnalyticsPage />} />
         </Route>
 

@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.cache.cache_service import CacheService
 from app.core.config import get_settings
 from app.db.models.course import Course, Lesson, Module
 from app.db.models.enrollment import Enrollment
@@ -354,6 +355,8 @@ class ScormService:
         }
 
         ScormService._sync_legacy_tracking(db, user.id, package, runtime_values)
+        CacheService.delete_key(f"dashboard:user:{user.id}")
+        CacheService.delete_key("dashboard:global")
         db.commit()
         return {"registration_id": str(registration.id), "committed": True}
 
@@ -381,6 +384,8 @@ class ScormService:
 
         ScormService._sync_legacy_tracking(db, user.id, package, runtime_values)
         ScormService._sync_lms_progress(db, user.id, package, registration.status)
+        CacheService.delete_key(f"dashboard:user:{user.id}")
+        CacheService.delete_key("dashboard:global")
         db.add(registration)
         db.commit()
         db.refresh(registration)
@@ -424,7 +429,10 @@ class ScormService:
         runtime_values: dict[str, str],
     ) -> None:
         if package.lesson_id is None:
-            return
+            lesson_id = ScormService._resolve_or_create_lesson_for_package(db, package)
+            if lesson_id is None:
+                return
+            package.lesson_id = lesson_id
 
         score_raw = runtime_values.get("cmi.core.score.raw")
         lesson_status = (
@@ -482,3 +490,41 @@ class ScormService:
         except ValueError:
             return 0
         return max(0, (hours * 3600) + (minutes * 60) + seconds)
+
+    @staticmethod
+    def get_registration_report(db: Session, registration_id: UUID, user: User) -> dict:
+        registration = ScormService._get_registration_for_user(db, registration_id, user)
+        runtime_values = {
+            row.key: row.value
+            for row in db.scalars(
+                select(ScormRuntimeData).where(ScormRuntimeData.registration_id == registration.id)
+            ).all()
+        }
+
+        completion = 100 if ScormService._runtime_indicates_completion(runtime_values) else 0
+
+        status_value = (
+            runtime_values.get("cmi.core.lesson_status")
+            or runtime_values.get("cmi.lesson_status")
+            or runtime_values.get("cmi.completion_status")
+            or registration.status
+        )
+        status_value = (status_value or "in_progress").strip().lower()
+
+        score_raw = runtime_values.get("cmi.core.score.raw")
+        score: float | None
+        try:
+            score = float(score_raw) if score_raw not in {None, ""} else None
+        except ValueError:
+            score = None
+
+        session_time = runtime_values.get("cmi.core.session_time") or "00:00:00"
+        time_spent = ScormService._parse_scorm_time_to_seconds(session_time)
+
+        return {
+            "completion": completion,
+            "status": status_value,
+            "score": score,
+            "timeSpent": time_spent,
+            "lastAccessed": registration.completed_at or registration.started_at,
+        }

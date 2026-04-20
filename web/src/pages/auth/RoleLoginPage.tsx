@@ -16,7 +16,7 @@ export default function RoleLoginPage({ role }: RoleLoginPageProps) {
   const { token, user, logout } = useAuthStore();
   const loginMutation = useLoginMutation();
   const [form, setForm] = useState({
-    email: role === "admin" ? "admin@example.com" : role === "instructor" ? "mentor@example.com" : "student@example.com",
+    email: role === "admin" ? "admin@example.com" : "student@example.com",
     password: "Password123!",
   });
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function RoleLoginPage({ role }: RoleLoginPageProps) {
     return <Navigate to={roleDashboardPath(user.role)} replace />;
   }
 
-  const routeRoleSlug = role === "instructor" ? "mentor" : role;
+  const routeRoleSlug = role === "admin" ? "admin" : "student";
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
@@ -82,11 +82,7 @@ export default function RoleLoginPage({ role }: RoleLoginPageProps) {
         <p className="text-xs text-slate-400">
           Need another role?{" "}
           <Link className="text-blue-300" to="/login/student">
-            Student
-          </Link>{" "}
-          ·{" "}
-          <Link className="text-blue-300" to="/login/mentor">
-            Mentor
+            Learner
           </Link>{" "}
           ·{" "}
           <Link className="text-blue-300" to="/login/admin">

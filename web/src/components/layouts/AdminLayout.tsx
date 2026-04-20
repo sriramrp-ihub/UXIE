@@ -5,6 +5,7 @@ import { useAuthStore } from "../../store/auth.store";
 
 const adminNav = [
   { to: "/admin/dashboard", label: "Dashboard" },
+  { to: "/admin/course-management", label: "Course Management" },
   { to: "/admin/users", label: "User Management" },
   { to: "/admin/courses", label: "Course Oversight" },
   { to: "/admin/analytics", label: "Platform Analytics" },

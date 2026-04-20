@@ -14,10 +14,12 @@ export function RoleProtectedRoute({ role, children }: RoleProtectedRouteProps) 
   const user = useAuthStore((s) => s.user);
 
   if (!token || !user) {
-    return <Navigate to={`/login/${role === "instructor" ? "mentor" : role}`} replace />;
+    return <Navigate to={`/login/${role === "admin" ? "admin" : "student"}`} replace />;
   }
 
-  if (user.role !== role) {
+  const adminAccessAllowed = role === "admin" && (user.role === "admin" || user.role === "instructor");
+
+  if (!adminAccessAllowed && user.role !== role) {
     return <Navigate to={roleDashboardPath(user.role)} replace />;
   }
 

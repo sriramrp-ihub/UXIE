@@ -14,6 +14,8 @@ Production-grade Learning Management System backend with:
 For deep architecture and implementation details, see:
 
 - `docs/FULL_DOCUMENTATION.md`
+- `docs/PRODUCTION_TECHNICAL_GUIDE.md` (technical + production-grade operations guide)
+- `docs/SCORM_TECHNICAL_DOCUMENTATION.md` (dedicated SCORM architecture + runtime guide)
 - `docs/PROJECT_STATUS_2026-04-18.md` (detailed current status snapshot)
 - `web/README.md` (React frontend app)
 

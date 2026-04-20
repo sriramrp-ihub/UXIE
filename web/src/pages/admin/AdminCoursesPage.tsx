@@ -11,7 +11,8 @@ export default function AdminCoursesPage() {
           <article key={course.id} className="rounded-lg border border-slate-700 p-3 text-sm">
             <p className="font-medium">{course.title}</p>
             <p>{course.description ?? "No description"}</p>
-            <p>Instructor ID: {course.instructor_id}</p>
+            <p>Instructor: {course.instructor_name ?? "Assigned instructor"}</p>
+            <p>Modules: {course.modules_count ?? 0} • Lessons: {course.lessons_count ?? 0}</p>
           </article>
         ))}
       </div>

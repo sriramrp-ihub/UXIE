@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
 import { unwrap } from "./helpers";
 
-import type { ScormInitializeResponse, ScormRegistration, ScormPackage } from "../../types/domain";
+import type { ScormInitializeResponse, ScormRegistration, ScormPackage, ScormReport } from "../../types/domain";
 
 export interface ScormRuntimeData {
   id: string;
@@ -34,4 +34,6 @@ export const scormApi = {
     ),
   finish: async (registrationId: string) =>
     unwrap<ScormRegistration>(await apiClient.post(`/scorm/runtime/${registrationId}/finish`)),
+  report: async (registrationId: string) =>
+    unwrap<ScormReport>(await apiClient.get(`/scorm/report/${registrationId}`)),
 };

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, require_admin, require_instructor
@@ -43,3 +43,19 @@ def global_dashboard(
 @router.get("/active-users")
 def active_users(_: User = Depends(require_admin)):
     return api_success({"active_users": AnalyticsService.get_active_users_count()})
+
+
+@router.get("/time-spent/{user_id}")
+def time_spent(
+    user_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if user.role == "student" and user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+
+    data = AnalyticsService.time_spent_by_user(db, user_id)
+    return api_success(data)

@@ -9,7 +9,7 @@ export default function CourseDetailPage() {
   const courseDetail = useCourseDetail(courseId);
   const enrollMutation = useEnrollMutation();
 
-  if (!courseId) return <EmptyState title="Missing course ID" />;
+  if (!courseId) return <EmptyState title="Course not found" />;
   if (courseDetail.isLoading) return <LoadingState message="Loading course..." />;
 
   if (!courseDetail.data) {

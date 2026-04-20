@@ -361,25 +361,10 @@ class CourseService:
             )
         ) or 0
 
-        quiz = db.scalar(select(Quiz).where(Quiz.course_id == course_id))
-        has_quiz = quiz is not None
-        quiz_attempted = False
-        if quiz is not None:
-            quiz_attempted = bool(
-                db.scalar(
-                    select(exists().where(
-                        QuizAttempt.quiz_id == quiz.id,
-                        QuizAttempt.user_id == user_id,
-                    ))
-                )
-            )
-
-        denominator = int(total_lessons) + (1 if has_quiz else 0)
-        if denominator <= 0:
+        if int(total_lessons) <= 0:
             return 0
 
-        numerator = int(completed_lessons) + (1 if quiz_attempted else 0)
-        return max(0, min(100, round((numerator / denominator) * 100)))
+        return max(0, min(100, round((int(completed_lessons) / int(total_lessons)) * 100)))
 
     @staticmethod
     def get_quiz_by_course(db: Session, course_id: UUID) -> Quiz:

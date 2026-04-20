@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { scormApi } from "../../lib/api/scorm.api";
+import type { ScormReport } from "../../types/domain";
 
 interface ScormApiBridge {
   LMSInitialize: (param: string) => string;
@@ -23,6 +24,8 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
   const queryClient = useQueryClient();
   const [status, setStatus] = useState("Booting SCORM runtime...");
   const [currentLaunchUrl, setCurrentLaunchUrl] = useState("");
+  const [registrationId, setRegistrationId] = useState("");
+  const [report, setReport] = useState<ScormReport | null>(null);
 
   const runtimeRef = useRef<Record<string, string>>({});
   const dirtyKeysRef = useRef<Set<string>>(new Set());
@@ -36,6 +39,7 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
     const setupSession = async () => {
       const initialized = await scormApi.initialize(packageId);
       registrationIdRef.current = initialized.session_id;
+      setRegistrationId(initialized.session_id);
       runtimeRef.current = { ...(initialized.runtime_data ?? {}) };
       const launch = initialized.activities?.[0]?.launch_url || initialized.package.file_path;
       let resolvedPath = launch;
@@ -97,10 +101,26 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
         }
         const registrationId = registrationIdRef.current;
         if (registrationId) {
+          const lessonStatus = runtimeRef.current["cmi.core.lesson_status"]?.trim().toLowerCase();
+          const completionStatus = runtimeRef.current["cmi.completion_status"]?.trim().toLowerCase();
+          const hasCompletionSignal =
+            [lessonStatus, completionStatus].filter(Boolean).some((value) =>
+              ["completed", "passed"].includes(String(value))
+            );
+
+          if (!hasCompletionSignal) {
+            runtimeRef.current["cmi.core.lesson_status"] = "completed";
+            runtimeRef.current["cmi.completion_status"] = "completed";
+            dirtyKeysRef.current.add("cmi.core.lesson_status");
+            dirtyKeysRef.current.add("cmi.completion_status");
+          }
+
           setStatus("Finalizing SCORM session...");
           flush()
             .then(() => scormApi.commit(registrationId))
             .then(() => scormApi.finish(registrationId))
+            .then(() => scormApi.report(registrationId))
+            .then((reportData) => setReport(reportData))
             .then(() => {
               queryClient.invalidateQueries({ queryKey: ["progress"] });
               queryClient.invalidateQueries({ queryKey: ["analytics", "me"] });
@@ -176,5 +196,7 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
   return {
     status,
     currentLaunchUrl,
+    registrationId,
+    report,
   };
 }

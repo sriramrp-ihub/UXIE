@@ -134,3 +134,11 @@ export interface ScormInitializeResponse {
   activities: ScormActivity[];
   runtime_data: Record<string, string>;
 }
+
+export interface ScormReport {
+  completion: number;
+  status: string;
+  score: number | null;
+  timeSpent: number;
+  lastAccessed: string;
+}

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lom xmlns="http://ltsc.ieee.org/xsd/LOM"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://ltsc.ieee.org/xsd/LOM lom.xsd">
+  <general>
+    <title>
+      <string language="en">Beginner react hooks Masterclass</string>
+    </title>
+    <description>
+      <string language="en">A comprehensive beginner course covering all aspects of react hooks</string>
+    </description>
+    <keyword>
+      <string language="en">e-learning</string>
+    </keyword>
+    <keyword>
+      <string language="en">online course</string>
+    </keyword>
+    <language>en</language>
+  </general>
+  <lifecycle>
+    <version>
+      <string language="en">1.0</string>
+    </version>
+    <status>
+      <source>LOMv1.0</source>
+      <value>final</value>
+    </status>
+  </lifecycle>
+  <metametadata>
+    <metadatascheme>LOMv1.0</metadatascheme>
+    <language>en</language>
+  </metametadata>
+  <technical>
+    <format>text/html</format>
+  </technical>
+  <educational>
+    <learningResourceType>
+      <source>LOMv1.0</source>
+      <value>slide</value>
+    </learningResourceType>
+    <intendedEndUserRole>
+      <source>LOMv1.0</source>
+      <value>learner</value>
+    </intendedEndUserRole>
+    <language>en</language>
+  </educational>
+  <rights>
+    <copyrightAndOtherRestrictions>
+      <source>LOMv1.0</source>
+      <value>yes</value>
+    </copyrightAndOtherRestrictions>
+  </rights>
+
+    <classification>
+      <purpose>
+        <source>LOMv1.0</source>
+        <value>educational objective</value>
+      </purpose>
+      <description>
+        <string language="en">Understand fundamental concepts of react hooks</string>
+      </description>
+    </classification>
+    <classification>
+      <purpose>
+        <source>LOMv1.0</source>
+        <value>educational objective</value>
+      </purpose>
+      <description>
+        <string language="en">Apply react hooks principles in real-world scenarios</string>
+      </description>
+    </classification>
+    <classification>
+      <purpose>
+        <source>LOMv1.0</source>
+        <value>educational objective</value>
+      </purpose>
+      <description>
+        <string language="en">Master advanced react hooks techniques</string>
+      </description>
+    </classification>
+    <classification>
+      <purpose>
+        <source>LOMv1.0</source>
+        <value>educational objective</value>
+      </purpose>
+      <description>
+        <string language="en">Evaluate and optimize react hooks implementations</string>
+      </description>
+    </classification>
+</lom>

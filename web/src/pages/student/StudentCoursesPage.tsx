@@ -30,7 +30,7 @@ export default function StudentCoursesPage() {
                   View
                 </Link>
                 <button className="btn" onClick={() => enroll.mutate(course.id)} disabled={enroll.isPending}>
-                  Enroll
+                  {enroll.isPending ? "Enrolling..." : "Enroll"}
                 </button>
               </div>
             </article>
@@ -41,6 +41,18 @@ export default function StudentCoursesPage() {
           </div>
         )}
       </section>
+
+      {enroll.isSuccess ? (
+        <section className="card">
+          <p className="text-sm text-emerald-300">Enrollment successful. You can now continue in My Learning.</p>
+        </section>
+      ) : null}
+
+      {enroll.isError ? (
+        <section className="card">
+          <p className="text-sm text-red-300">Enrollment could not be completed. You may already be enrolled.</p>
+        </section>
+      ) : null}
     </div>
   );
 }

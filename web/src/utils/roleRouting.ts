@@ -5,7 +5,7 @@ export function roleDashboardPath(role: UserRole): string {
     case "student":
       return "/student/dashboard";
     case "instructor":
-      return "/mentor/dashboard";
+      return "/admin/dashboard";
     case "admin":
       return "/admin/dashboard";
     default:
@@ -18,7 +18,7 @@ export function roleLabel(role: UserRole): string {
     case "student":
       return "Learner";
     case "instructor":
-      return "Mentor";
+      return "Admin";
     case "admin":
       return "Admin";
     default:

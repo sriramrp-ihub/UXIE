@@ -23,6 +23,18 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-slate-400">Active Users</p>
           <p className="mt-2 text-2xl font-semibold">{active.data?.active_users ?? 0}</p>
         </article>
+        <article className="card">
+          <p className="text-xs text-slate-400">Completion Rate</p>
+          <p className="mt-2 text-2xl font-semibold">{global.data?.completion_percentage ?? 0}%</p>
+        </article>
+        <article className="card">
+          <p className="text-xs text-slate-400">Average Score</p>
+          <p className="mt-2 text-2xl font-semibold">{global.data?.average_score ?? 0}</p>
+        </article>
+        <article className="card md:col-span-2">
+          <p className="text-xs text-slate-400">Total Learning Time</p>
+          <p className="mt-2 text-2xl font-semibold">{global.data?.time_spent ?? 0} sec</p>
+        </article>
       </section>
     </div>
   );

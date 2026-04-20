@@ -9,7 +9,7 @@ export default function StudentCourseDetailPage() {
   const course = useCourseDetail(courseId);
   const enroll = useEnrollMutation();
 
-  if (!courseId) return <EmptyState title="Missing course ID" />;
+  if (!courseId) return <EmptyState title="Course not found" />;
   if (course.isLoading) return <LoadingState message="Loading course detail..." />;
   if (!course.data) return <EmptyState title="Course not found" />;
 
@@ -19,13 +19,17 @@ export default function StudentCourseDetailPage() {
         <h1 className="text-2xl font-semibold">{course.data.title}</h1>
         <p className="text-slate-300">{course.data.description ?? "No description"}</p>
         <div className="flex gap-2">
-          <button className="btn" onClick={() => enroll.mutate(courseId)}>
-            Enroll
+          <button className="btn" onClick={() => enroll.mutate(courseId)} disabled={enroll.isPending}>
+            {enroll.isPending ? "Enrolling..." : "Enroll"}
           </button>
           <Link className="btn-secondary" to="/student/learning">
-            Go to My Learning
+            Start Learning
           </Link>
         </div>
+        {enroll.isSuccess ? <p className="text-sm text-emerald-300">You are enrolled in this course.</p> : null}
+        {enroll.isError ? (
+          <p className="text-sm text-red-300">Could not enroll. You may already have access to this course.</p>
+        ) : null}
       </section>
 
       <section className="card">

@@ -22,6 +22,14 @@ export function useCourseAnalytics(courseId: string, enabled = false) {
   });
 }
 
+export function useTimeSpent(userId: string, enabled = true) {
+  return useQuery({
+    queryKey: ["analytics", "time-spent", userId],
+    queryFn: () => analyticsApi.timeSpent(userId),
+    enabled: !!userId && enabled,
+  });
+}
+
 export function useAdminUsers(enabled = true) {
   return useQuery({ queryKey: ["admin", "users"], queryFn: analyticsApi.users, enabled });
 }

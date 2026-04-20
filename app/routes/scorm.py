@@ -14,6 +14,7 @@ from app.schemas.scorm import (
     ScormActivityOut,
     ScormInitializeOut,
     ScormPackageOut,
+    ScormReportOut,
     ScormRegistrationOut,
     ScormRuntimeSetOut,
     ScormRuntimeSetRequest,
@@ -120,3 +121,13 @@ def finish_runtime(
 ):
     registration = ScormService.finish_runtime(db, registration_id, user)
     return api_success(ScormRegistrationOut.model_validate(registration).model_dump())
+
+
+@router.get("/report/{registration_id}")
+def scorm_report(
+    registration_id: UUID,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    report = ScormService.get_registration_report(db, registration_id, user)
+    return api_success(ScormReportOut.model_validate(report).model_dump())

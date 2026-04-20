@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
+import { ToastViewport } from "./components/ToastViewport";
 import { queryClient } from "./lib/api/queryClient";
 import "./index.css";
 
@@ -14,6 +15,7 @@ createRoot(document.getElementById("root")!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <App />
+          <ToastViewport />
         </BrowserRouter>
       </QueryClientProvider>
     </GlobalErrorBoundary>
