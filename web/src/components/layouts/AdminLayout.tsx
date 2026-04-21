@@ -9,6 +9,7 @@ const adminNav = [
   { to: "/admin/users", label: "User Management" },
   { to: "/admin/courses", label: "Course Oversight" },
   { to: "/admin/analytics", label: "Platform Analytics" },
+  { to: "/admin/assistant", label: "Assistant" },
 ];
 
 export function AdminLayout() {

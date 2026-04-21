@@ -37,16 +37,167 @@ For deep architecture and implementation details, see:
 
 ## Project structure
 
-- `app/main.py` — app bootstrap, middleware, router registration, static mounts
-- `app/routes/` — API endpoints
-- `app/services/` — business logic
-- `app/db/models/` — SQLAlchemy entities
-- `app/cache/` — Redis cache and active-user logic
-- `app/core/` — config, dependencies, security, API envelope
-- `app/utils/file_handler.py` — SCORM ZIP/manifest handling
-- `frontend/` — LMS portal + SCORM player
-- `storage/scorm/` — extracted SCORM content
-- `alembic/` — DB migrations
+Detailed source tree (excluding generated folders such as `.venv/`, `node_modules/`, `dist/`, `__pycache__/`):
+
+```text
+UXIE/
+├── README.md
+├── requirements.txt
+├── alembic.ini
+├── .env.example
+├── alembic/
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions/
+│       ├── 20260413_0001_initial_schema.py
+│       └── 20260417_0002_scorm_runtime.py
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── cache/
+│   │   ├── __init__.py
+│   │   ├── cache_service.py
+│   │   └── redis_client.py
+│   ├── constants/
+│   │   ├── __init__.py
+│   │   └── roles.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   ├── dependencies.py
+│   │   ├── response.py
+│   │   └── security.py
+│   ├── db/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── database.py
+│   │   └── models/
+│   │       ├── __init__.py
+│   │       ├── course.py
+│   │       ├── enrollment.py
+│   │       ├── progress.py
+│   │       ├── quiz.py
+│   │       ├── scorm.py
+│   │       └── user.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── analytics.py
+│   │   ├── auth.py
+│   │   ├── courses.py
+│   │   ├── enrollments.py
+│   │   ├── progress.py
+│   │   ├── quiz.py
+│   │   ├── scorm.py
+│   │   └── users.py
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── course.py
+│   │   ├── quiz.py
+│   │   ├── scorm.py
+│   │   └── user.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── analytics_service.py
+│   │   ├── auth_service.py
+│   │   ├── course_service.py
+│   │   └── scorm_service.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── email.py
+│       └── file_handler.py
+├── docs/
+│   ├── FULL_DOCUMENTATION.md
+│   ├── PRODUCTION_TECHNICAL_GUIDE.md
+│   ├── PROJECT_STATUS_2026-04-18.md
+│   └── SCORM_TECHNICAL_DOCUMENTATION.md
+├── frontend/
+│   ├── index.html
+│   ├── scorm-player.html
+│   ├── scorm-player.js
+│   ├── script.js
+│   └── styles.css
+├── storage/
+│   ├── scorm/
+│   │   └── <package_uuid>/... extracted SCORM assets ...
+│   └── tmp/
+│       └── <upload_uuid>.zip
+└── web/
+	├── README.md
+	├── index.html
+	├── package.json
+	├── package-lock.json
+	├── vite.config.ts
+	├── eslint.config.js
+	├── postcss.config.js
+	├── tailwind.config.js
+	├── tsconfig.json
+	├── tsconfig.app.json
+	├── tsconfig.node.json
+	├── public/
+	│   ├── favicon.svg
+	│   └── icons.svg
+	└── src/
+		├── App.tsx
+		├── main.tsx
+		├── index.css
+		├── App.css
+		├── assets/
+		├── components/
+		│   ├── AppShell.tsx
+		│   ├── EmptyState.tsx
+		│   ├── ErrorState.tsx
+		│   ├── GlobalErrorBoundary.tsx
+		│   ├── LoadingState.tsx
+		│   ├── ProtectedRoute.tsx
+		│   ├── RoleGuard.tsx
+		│   ├── RoleProtectedRoute.tsx
+		│   ├── ToastViewport.tsx
+		│   └── layouts/
+		├── features/
+		│   ├── analytics/
+		│   ├── auth/
+		│   ├── courses/
+		│   ├── quiz/
+		│   └── scorm/
+		├── hooks/
+		│   └── useAuthBootstrap.ts
+		├── lib/
+		│   └── api/
+		├── pages/
+		│   ├── admin/
+		│   ├── auth/
+		│   ├── student/
+		│   ├── AdminPanelPage.tsx
+		│   ├── AnalyticsPage.tsx
+		│   ├── CatalogPage.tsx
+		│   ├── CourseDetailPage.tsx
+		│   ├── DashboardPage.tsx
+		│   ├── LessonViewerPage.tsx
+		│   ├── LoginPage.tsx
+		│   ├── MyLearningPage.tsx
+		│   ├── QuizPage.tsx
+		│   ├── RegisterPage.tsx
+		│   ├── ScormCenterPage.tsx
+		│   └── ScormPlayerPage.tsx
+		├── store/
+		│   ├── auth.store.ts
+		│   └── uiFeedback.store.ts
+		├── types/
+		│   └── domain.ts
+		└── utils/
+			├── jwt.ts
+			├── roleRouting.ts
+			└── storage.ts
+```
+
+Key directories at a glance:
+
+- `app/` — FastAPI backend (API routes, business services, data layer, SCORM runtime logic).
+- `web/` — React + TypeScript application used as the modern LMS frontend.
+- `frontend/` — static portal assets mounted at `/sandbox` (legacy/simple UI).
+- `storage/scorm/` — extracted SCORM package files served through `/scorm-content`.
+- `alembic/` — DB schema migration history.
+- `docs/` — architecture, production, SCORM internals, and status documentation.
 
 ---
 

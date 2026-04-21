@@ -222,6 +222,12 @@ class ScormService:
                 )
             )
 
+        ScormService._resolve_or_create_lesson_for_package(db, package)
+
+        CacheService.delete_key(f"course:{course_id}")
+        CacheService.delete_key("courses:all")
+        CacheService.delete_key("dashboard:global")
+
         db.commit()
         db.refresh(package)
         return package

@@ -21,6 +21,7 @@ const StudentQuizPage = lazy(() => import("./pages/student/StudentQuizPage"));
 const StudentProfilePage = lazy(() => import("./pages/student/StudentProfilePage"));
 const LessonViewerPage = lazy(() => import("./pages/LessonViewerPage"));
 const ScormPlayerPage = lazy(() => import("./pages/ScormPlayerPage"));
+const ChatbotPage = lazy(() => import("./pages/ChatbotPage"));
 
 const AdminCourseManagementPage = lazy(() => import("./pages/admin/AdminCourseManagementPage"));
 
@@ -57,6 +58,7 @@ function App() {
           <Route path="lesson-viewer" element={<LessonViewerPage />} />
           <Route path="quiz" element={<StudentQuizPage />} />
           <Route path="profile" element={<StudentProfilePage />} />
+          <Route path="assistant" element={<ChatbotPage />} />
           <Route path="scorm/player/:packageId" element={<ScormPlayerPage />} />
         </Route>
 
@@ -67,6 +69,7 @@ function App() {
           <Route path="courses" element={<AdminCoursesPage />} />
           <Route path="course-management" element={<AdminCourseManagementPage />} />
           <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="assistant" element={<ChatbotPage />} />
         </Route>
 
         <Route path="/" element={<Navigate to={user ? roleDashboardPath(user.role) : "/login/student"} replace />} />

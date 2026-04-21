@@ -14,6 +14,7 @@ from app.core.response import api_error
 from app.core.security import decode_token
 from app.routes.analytics import router as analytics_router
 from app.routes.auth import router as auth_router
+from app.routes.chatbot import router as chatbot_router
 from app.routes.courses import router as courses_router
 from app.routes.enrollments import router as enrollments_router
 from app.routes.progress import router as progress_router
@@ -119,6 +120,7 @@ app.include_router(admin_scorm_router, prefix=settings.api_prefix)
 app.include_router(progress_router, prefix=settings.api_prefix)
 app.include_router(quiz_router, prefix=settings.api_prefix)
 app.include_router(analytics_router, prefix=settings.api_prefix)
+app.include_router(chatbot_router, prefix=settings.api_prefix)
 
 app.mount("/scorm-content", StaticFiles(directory=settings.scorm_storage_dir), name="scorm-content")
 app.mount(

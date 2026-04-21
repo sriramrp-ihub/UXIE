@@ -32,6 +32,12 @@ class Settings(BaseSettings):
     cache_ttl_long: int = 300
     active_user_window_seconds: int = 900
 
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-1.5-flash"
+    gemini_timeout_seconds: float = 20.0
+
+    telegram_bot_token: str = ""
+
     model_config = SettingsConfigDict(env_file=str(ENV_FILE), env_file_encoding="utf-8")
 
     def model_post_init(self, __context) -> None:  # type: ignore[override]

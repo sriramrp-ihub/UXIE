@@ -7,6 +7,7 @@ const studentNav = [
   { to: "/student/dashboard", label: "Dashboard" },
   { to: "/student/courses", label: "Courses" },
   { to: "/student/learning", label: "My Learning" },
+  { to: "/student/assistant", label: "Assistant" },
   { to: "/student/quiz", label: "Quiz" },
   { to: "/student/profile", label: "Profile" },
 ];
