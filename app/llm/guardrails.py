@@ -1,10 +1,13 @@
 """Guardrails for BFSI domain validation and policy checks."""
 
+import logging
+
 from app.llm.constants import BFSI_ALLOWED_TOPICS, EMPTY_QUERY_MESSAGE, OUT_OF_SCOPE_MESSAGE
-from app.llm.intent_classifier import is_bfsi_intent
+from app.llm.intent_classifier import classify_query
 from app.llm.utils import normalize_text
 
 _BFSI_ALLOWED_TOPICS_LOWER: tuple[str, ...] = tuple(topic.lower() for topic in BFSI_ALLOWED_TOPICS)
+logger = logging.getLogger(__name__)
 
 
 def _is_bfsi_query_lower(lowered: str) -> bool:
@@ -35,8 +38,10 @@ async def validate_query(query: str) -> tuple[bool, str | None]:
     if _is_bfsi_query_lower(cleaned.lower()):
         return True, None
 
-    in_scope_semantic = await is_bfsi_intent(cleaned)
-    if not in_scope_semantic:
-        return False, OUT_OF_SCOPE_MESSAGE
+    intent = await classify_query(cleaned)
+    logger.info("Guardrail semantic classifier result: %s", intent)
 
-    return True, None
+    if intent == "in_scope":
+        return True, None
+
+    return False, OUT_OF_SCOPE_MESSAGE

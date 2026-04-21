@@ -121,3 +121,13 @@ async def is_bfsi_intent(query: str) -> bool:
         raise asyncio.CancelledError()
 
     return result
+
+
+async def classify_query(query: str) -> str:
+    """Return semantic scope label for guardrails.
+
+    Returns:
+    - "in_scope"
+    - "out_of_scope"
+    """
+    return "in_scope" if await is_bfsi_intent(query) else "out_of_scope"

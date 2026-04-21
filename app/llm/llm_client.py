@@ -14,6 +14,8 @@ import certifi
 
 from app.core.config import get_settings
 
+_SSL_CONTEXT = ssl.create_default_context(cafile=certifi.where())
+
 
 class LLMClient:
     """Thin HTTP client for Gemini text generation."""
@@ -59,10 +61,9 @@ class LLMClient:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        ssl_context = ssl.create_default_context(cafile=certifi.where())
 
         try:
-            with request.urlopen(req, timeout=self.timeout_seconds, context=ssl_context) as resp:
+            with request.urlopen(req, timeout=self.timeout_seconds, context=_SSL_CONTEXT) as resp:
                 body = json.loads(resp.read().decode("utf-8"))
         except error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="ignore")
