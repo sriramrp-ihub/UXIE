@@ -27,7 +27,9 @@ a 3-layer validation pipeline.
 
 ### Layer 2: Semantic Intent Classification (fallback path)
 - File: `app/llm/intent_classifier.py`
-- Function: `is_bfsi_intent(query: str) -> bool` (async)
+- Functions:
+  - `is_bfsi_intent(query: str) -> bool` (async)
+  - `classify_query(query: str) -> str` (async, returns `in_scope` / `out_of_scope`)
 - Behavior:
   - Runs only when keyword layer fails.
   - Sends a strict classification prompt to Gemini.
@@ -44,8 +46,13 @@ a 3-layer validation pipeline.
   - `app/llm/llm_client.py`
 - Behavior:
   - Once validation passes, prompt is built with BFSI instructions.
+  - Finance input logic controls intent/tone/format before LLM call.
   - Gemini generates the final answer.
+  - Finance output logic sanitizes unsafe claims, formats output, and appends disclaimers.
   - Error messages are mapped to safe fallbacks (quota/config/network/unavailable).
+
+### Observability
+- Guardrails logs semantic classifier decision at validation time to help verify fallback behavior in production traces.
 
 ---
 

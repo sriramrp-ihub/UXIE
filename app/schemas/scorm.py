@@ -18,6 +18,12 @@ class ScormPackageOut(BaseModel):
     created_at: datetime
 
 
+class ScormUploadResultOut(ScormPackageOut):
+    activity_count: int
+    is_single_sco: bool
+    health_warning: str | None = None
+
+
 class ScormActivityOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

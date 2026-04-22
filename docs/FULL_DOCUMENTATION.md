@@ -19,6 +19,9 @@ UXIE LMS is a backend-first Learning Management System with a static frontend po
 - Quiz retrieval and submission
 - Analytics dashboards
 - SCORM package upload, launch, runtime tracking, and completion persistence
+- BFSI-focused chatbot (web + Telegram integrations)
+- Multi-layer chatbot guardrails (keyword + semantic fallback)
+- Finance logic layer for input intent control and output safety formatting
 
 ### High-level architecture
 
@@ -29,6 +32,7 @@ UXIE LMS is a backend-first Learning Management System with a static frontend po
 - **Cache/activity:** Redis
 - **Frontend:** static HTML/CSS/JS served under `/sandbox`
 - **SCORM content serving:** static files mounted at `/scorm-content`
+- **Chatbot endpoint:** `/api/v1/chat`
 
 ---
 
@@ -93,6 +97,10 @@ Copy:
 | `CACHE_TTL_MEDIUM` | medium cache TTL (seconds) | `180` |
 | `CACHE_TTL_LONG` | long cache TTL (seconds) | `300` |
 | `ACTIVE_USER_WINDOW_SECONDS` | active user analytics window | `900` |
+| `GEMINI_API_KEY` | Gemini API key for chatbot | `***` |
+| `GEMINI_MODEL` | Gemini model alias | `gemini-flash-latest` |
+| `GEMINI_TIMEOUT_SECONDS` | LLM request timeout | `20` |
+| `TELEGRAM_BOT_TOKEN` | Telegram integration token | `***` |
 
 ---
 
@@ -218,6 +226,19 @@ All routes are under prefix: `/api/v1`
 - `GET /analytics/course/{course_id}` — instructor/admin
 - `GET /analytics/dashboard/me`
 - `GET /analytics/dashboard/global` — admin only
+
+### 8.8 Chatbot
+
+- `POST /chat`
+  - Request body: `{ "query": "..." }`
+  - Response body: `{ "response": "..." }`
+  - Validation flow:
+    1. BFSI keyword fast-path
+    2. semantic classifier fallback
+    3. reject only if both checks fail
+  - Post-processing flow:
+    - finance intent extraction and prompt control
+    - output safety rewrite (unsafe claims removal + disclaimers)
 - `GET /analytics/active-users` — admin only
 
 ### 8.8 SCORM Admin Upload

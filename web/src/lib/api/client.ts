@@ -1,9 +1,10 @@
 import axios from "axios";
 
+import { getCurrentPathname, redirectTo, resolveApiBaseUrl } from "../runtime/environment";
 import { useAuthStore } from "../../store/auth.store";
 import { useUiFeedbackStore } from "../../store/uiFeedback.store";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = resolveApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -72,12 +73,24 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     const status = error?.response?.status;
+    const method = error?.config?.method?.toUpperCase?.() ?? "REQUEST";
+    const url = error?.config?.url ?? "unknown-url";
     const toastId = (error?.config as { __toastId?: string } | undefined)?.__toastId;
     const detail =
       error?.response?.data?.error?.message ||
       error?.response?.data?.error ||
       error?.response?.data?.detail ||
       "Request failed. Please try again.";
+
+    // Keep a concrete trace in the browser console for debugging network/CORS/login issues.
+    console.error("[API] Request failed", {
+      method,
+      url,
+      status,
+      baseURL: error?.config?.baseURL,
+      detail,
+      raw: error,
+    });
 
     if (toastId) {
       useUiFeedbackStore.getState().updateToast(
@@ -104,8 +117,8 @@ apiClient.interceptors.response.use(
 
     if (status === 401) {
       useAuthStore.getState().logout();
-      if (!window.location.pathname.startsWith("/login/")) {
-        window.location.href = "/login/student";
+      if (!getCurrentPathname().startsWith("/login/")) {
+        redirectTo("/login/student");
       }
     }
     return Promise.reject(error);

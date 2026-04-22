@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user, require_instructor
@@ -19,6 +19,7 @@ from app.schemas.scorm import (
     ScormRuntimeSetOut,
     ScormRuntimeSetRequest,
     ScormRuntimeValuesOut,
+    ScormUploadResultOut,
 )
 from app.services.scorm_service import ScormService
 
@@ -44,7 +45,26 @@ async def upload_scorm(
         title,
         user,
     )
-    return api_success(ScormPackageOut.model_validate(package).model_dump())
+    activity_count = int(
+        db.scalar(
+            select(func.count(ScormActivity.id)).where(ScormActivity.package_id == package.id)
+        )
+        or 0
+    )
+    is_single_sco = activity_count <= 1
+    health_warning = (
+        "Single SCO/activity detected. If this course should track multiple modules, verify that imsmanifest.xml defines multiple item/resource launchable SCOs."
+        if is_single_sco
+        else None
+    )
+
+    payload = ScormUploadResultOut(
+        **ScormPackageOut.model_validate(package).model_dump(),
+        activity_count=activity_count,
+        is_single_sco=is_single_sco,
+        health_warning=health_warning,
+    )
+    return api_success(payload.model_dump())
 
 
 @router.get("/course/{course_id}/packages")

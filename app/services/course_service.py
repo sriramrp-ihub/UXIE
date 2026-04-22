@@ -11,6 +11,7 @@ from app.db.models.course import Course, Lesson, Module
 from app.db.models.enrollment import Enrollment
 from app.db.models.progress import Progress
 from app.db.models.quiz import Question, Quiz, QuizAttempt
+from app.db.models.scorm import ScormActivity, ScormPackage
 from app.db.models.user import User
 from app.schemas.course import CourseCreate, LessonCreate, ModuleCreate, ProgressUpdate
 from app.schemas.quiz import QuizSubmitRequest
@@ -19,6 +20,126 @@ settings = get_settings()
 
 
 class CourseService:
+    @staticmethod
+    def get_course_effective_units(db: Session, course_id: UUID) -> tuple[int, int]:
+        """
+        Returns (completed_units, total_units) for learner completion calculations.
+
+        Rationale:
+        - Non-SCORM lessons are counted directly.
+        - SCORM content can represent multiple internal activities while being modeled as
+          a single LMS lesson row. To avoid inflated 100% completion, effective SCORM
+          denominator uses max(scorm_lessons, scorm_activities).
+        """
+
+        non_scorm_lessons = int(
+            db.scalar(
+                select(func.count(Lesson.id))
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Lesson.content_type != "scorm",
+                )
+            )
+            or 0
+        )
+
+        scorm_lessons = int(
+            db.scalar(
+                select(func.count(Lesson.id))
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Lesson.content_type == "scorm",
+                )
+            )
+            or 0
+        )
+
+        scorm_activities = int(
+            db.scalar(
+                select(func.count(ScormActivity.id))
+                .join(ScormPackage, ScormPackage.id == ScormActivity.package_id)
+                .where(ScormPackage.course_id == course_id)
+            )
+            or 0
+        )
+
+        total_units = non_scorm_lessons + max(scorm_lessons, scorm_activities)
+        return (0, total_units)
+
+    @staticmethod
+    def get_user_course_effective_progress(db: Session, user_id: UUID, course_id: UUID) -> tuple[int, int]:
+        non_scorm_completed = int(
+            db.scalar(
+                select(func.count(Progress.id))
+                .join(Lesson, Lesson.id == Progress.lesson_id)
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Progress.user_id == user_id,
+                    Progress.completed.is_(True),
+                    Lesson.content_type != "scorm",
+                )
+            )
+            or 0
+        )
+
+        scorm_completed_lessons = int(
+            db.scalar(
+                select(func.count(Progress.id))
+                .join(Lesson, Lesson.id == Progress.lesson_id)
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Progress.user_id == user_id,
+                    Progress.completed.is_(True),
+                    Lesson.content_type == "scorm",
+                )
+            )
+            or 0
+        )
+
+        non_scorm_lessons = int(
+            db.scalar(
+                select(func.count(Lesson.id))
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Lesson.content_type != "scorm",
+                )
+            )
+            or 0
+        )
+
+        scorm_lessons = int(
+            db.scalar(
+                select(func.count(Lesson.id))
+                .join(Module, Module.id == Lesson.module_id)
+                .where(
+                    Module.course_id == course_id,
+                    Lesson.content_type == "scorm",
+                )
+            )
+            or 0
+        )
+
+        scorm_activities = int(
+            db.scalar(
+                select(func.count(ScormActivity.id))
+                .join(ScormPackage, ScormPackage.id == ScormActivity.package_id)
+                .where(ScormPackage.course_id == course_id)
+            )
+            or 0
+        )
+
+        effective_scorm_total = max(scorm_lessons, scorm_activities)
+        effective_scorm_completed = min(scorm_completed_lessons, effective_scorm_total)
+
+        total_units = non_scorm_lessons + effective_scorm_total
+        completed_units = non_scorm_completed + effective_scorm_completed
+        return completed_units, total_units
+
     @staticmethod
     def _serialize_course(db: Session, course: Course) -> dict:
         instructor = db.get(User, course.instructor_id)
@@ -344,27 +465,16 @@ class CourseService:
 
     @staticmethod
     def get_course_completion_percentage(db: Session, user_id: UUID, course_id: UUID) -> int:
-        total_lessons = db.scalar(
-            select(func.count(Lesson.id))
-            .join(Module, Module.id == Lesson.module_id)
-            .where(Module.course_id == course_id)
-        ) or 0
+        completed_units, total_units = CourseService.get_user_course_effective_progress(
+            db,
+            user_id,
+            course_id,
+        )
 
-        completed_lessons = db.scalar(
-            select(func.count(Progress.id))
-            .join(Lesson, Lesson.id == Progress.lesson_id)
-            .join(Module, Module.id == Lesson.module_id)
-            .where(
-                Module.course_id == course_id,
-                Progress.user_id == user_id,
-                Progress.completed.is_(True),
-            )
-        ) or 0
-
-        if int(total_lessons) <= 0:
+        if int(total_units) <= 0:
             return 0
 
-        return max(0, min(100, round((int(completed_lessons) / int(total_lessons)) * 100)))
+        return max(0, min(100, round((int(completed_units) / int(total_units)) * 100)))
 
     @staticmethod
     def get_quiz_by_course(db: Session, course_id: UUID) -> Quiz:

@@ -4,6 +4,15 @@
 **Repository root:** `UXIE/`  
 **Scope:** Current implementation status across backend, static frontend portal, and React frontend app.
 
+> **Addendum (22 April 2026):**
+> - Latest `main` changes for analytics, SCORM flow, and admin/learner UX were integrated into branch work.
+> - Learner-facing updates now include student certificates/quiz-related UX refinements in `web/`.
+> - Chatbot stack upgraded with:
+>   - semantic classifier fallback in guardrails
+>   - finance logic engine (input intent + output safety)
+>   - latency optimizations (single-flight dedupe + TTL response cache)
+> - See `docs/LATEST_CHANGES_2026-04-22.md` for consolidated change list.
+
 ---
 
 ## 1) Executive Summary

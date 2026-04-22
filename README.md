@@ -8,6 +8,18 @@ Production-grade Learning Management System backend with:
 - Analytics dashboards
 - SCORM 1.2 upload, playback, runtime tracking, and completion persistence
 - Redis cache-aside and active-user tracking
+- BFSI-focused chatbot integrations (Web + Telegram) with semantic guardrails
+
+## Latest updates (22 April 2026)
+
+- Merged latest `main` improvements for learner/admin UX, SCORM flow, and analytics refinements.
+- Added learner-focused updates in web app, including certificates and quiz/testing-related experience updates.
+- Enhanced chatbot stack with:
+	- semantic fallback guardrails (`keyword -> classifier -> allow/reject`)
+	- finance logic engine (`input intent + output safety formatting`)
+	- latency optimizations (single-flight dedupe + response cache + bounded classifier cache)
+
+See the consolidated change log: `docs/LATEST_CHANGES_2026-04-22.md`.
 
 ## Full technical documentation
 
@@ -17,6 +29,8 @@ For deep architecture and implementation details, see:
 - `docs/PRODUCTION_TECHNICAL_GUIDE.md` (technical + production-grade operations guide)
 - `docs/SCORM_TECHNICAL_DOCUMENTATION.md` (dedicated SCORM architecture + runtime guide)
 - `docs/PROJECT_STATUS_2026-04-18.md` (detailed current status snapshot)
+- `docs/LATEST_CHANGES_2026-04-22.md` (latest merged and implemented updates)
+- `docs/CHATBOT_GUARDRAILS.md` (chatbot validation + safety logic)
 - `web/README.md` (React frontend app)
 
 ---
@@ -215,6 +229,10 @@ Key variables:
 - `SCORM_STORAGE_DIR` (default `storage/scorm`)
 - `CACHE_TTL_SHORT|MEDIUM|LONG`
 - `ACTIVE_USER_WINDOW_SECONDS`
+- `GEMINI_API_KEY`
+- `GEMINI_MODEL`
+- `GEMINI_TIMEOUT_SECONDS`
+- `TELEGRAM_BOT_TOKEN`
 
 > Use a strong production secret for `JWT_SECRET_KEY`.
 
@@ -312,6 +330,10 @@ All endpoints are under `/api/v1`.
 - `POST /scorm/runtime/{registration_id}`
 - `POST /scorm/runtime/{registration_id}/commit`
 - `POST /scorm/runtime/{registration_id}/finish`
+
+### Chatbot
+
+- `POST /chat`
 
 ---
 

@@ -108,6 +108,9 @@ export interface ScormPackage {
   extracted_path: string;
   file_path: string;
   created_at: string;
+  activity_count?: number;
+  is_single_sco?: boolean;
+  health_warning?: string | null;
 }
 
 export interface ScormActivity {

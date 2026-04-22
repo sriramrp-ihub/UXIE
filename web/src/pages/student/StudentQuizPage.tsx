@@ -31,9 +31,10 @@ export default function StudentQuizPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <section className="card space-y-3">
-        <h1 className="text-xl font-semibold">Quiz Attempt</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">Knowledge Check</h1>
+        <p className="text-sm text-slate-600">Pick a course and complete its quiz at your own pace.</p>
         <label className="label">Select course</label>
         <select className="input" value={selectedCourseId} onChange={(e) => setSelectedCourseId(e.target.value)}>
           <option value="">Select enrolled course</option>
@@ -43,26 +44,26 @@ export default function StudentQuizPage() {
             </option>
           ))}
         </select>
-        <p className="text-sm text-slate-300">Timer: {formatted}</p>
+        <p className="text-sm text-slate-600">Timer: {formatted}</p>
       </section>
 
       <section className="card space-y-3">
         {!selectedCourseId ? (
           <EmptyState title="No course selected" hint="Choose a course to load its quiz." />
         ) : quiz.isLoading ? (
-          <p className="text-sm text-slate-400">Loading quiz...</p>
+          <p className="text-sm text-slate-500">Loading quiz...</p>
         ) : !quiz.data ? (
           <EmptyState title="No quiz available" hint="This course does not have a quiz yet." />
         ) : (
           <>
             {quiz.data.questions.map((q, idx) => (
-              <article key={q.id} className="rounded-lg border border-slate-700 p-4">
-                <p className="font-medium">
+              <article key={q.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="font-medium text-slate-800">
                   {idx + 1}. {q.question}
                 </p>
                 <div className="mt-2 space-y-2">
                   {q.options.map((opt) => (
-                    <label key={opt} className="flex items-center gap-2 text-sm">
+                    <label key={opt} className="flex items-center gap-2 text-sm text-slate-700">
                       <input
                         type="radio"
                         name={q.id}
@@ -88,7 +89,7 @@ export default function StudentQuizPage() {
             >
               {submit.isPending ? "Submitting..." : submit.isSuccess ? "Submitted" : "Submit"}
             </button>
-            {submit.data ? <p className="text-sm text-emerald-300">{submit.data.message ?? `Score: ${submit.data.score}`}</p> : null}
+            {submit.data ? <p className="text-sm text-emerald-700">{submit.data.message ?? `Score: ${submit.data.score}`}</p> : null}
           </>
         )}
       </section>

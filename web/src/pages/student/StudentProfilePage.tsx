@@ -6,27 +6,38 @@ export default function StudentProfilePage() {
   const dashboard = useMyDashboard();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <section className="card">
-        <h1 className="text-xl font-semibold">Profile</h1>
-        <p className="mt-2 text-sm text-slate-300">{user?.name}</p>
-        <p className="text-sm text-slate-400">{user?.email}</p>
-        <p className="text-sm text-slate-400">Role: {user?.role}</p>
+        <h1 className="text-2xl font-semibold text-slate-900">My Profile</h1>
+        <p className="mt-3 text-base font-medium text-slate-800">{user?.name ?? "Learner"}</p>
+        <p className="text-sm text-slate-600">{user?.email}</p>
+        <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Learning account</p>
       </section>
 
       <section className="grid gap-3 md:grid-cols-3">
         <article className="card">
-          <p className="text-xs text-slate-400">Enrolled Courses</p>
-          <p className="mt-2 text-2xl font-semibold">{dashboard.data?.enrolled_courses ?? 0}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Enrolled Courses</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">{dashboard.data?.enrolled_courses ?? 0}</p>
         </article>
         <article className="card">
-          <p className="text-xs text-slate-400">Completed Lessons</p>
-          <p className="mt-2 text-2xl font-semibold">{dashboard.data?.completed_lessons ?? 0}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Completed Lessons</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">{dashboard.data?.completed_lessons ?? 0}</p>
         </article>
         <article className="card">
-          <p className="text-xs text-slate-400">Average Score</p>
-          <p className="mt-2 text-2xl font-semibold">{dashboard.data?.average_score ?? 0}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Average Score</p>
+          <p className="mt-2 text-3xl font-semibold text-slate-900">{Math.round(dashboard.data?.average_score ?? 0)}%</p>
         </article>
+      </section>
+
+      <section className="card">
+        <h2 className="text-lg font-semibold text-slate-900">Learning Goals</h2>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          {["Complete one lesson today", "Review your latest course", "Keep your streak going"].map((goal) => (
+            <div key={goal} className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+              {goal}
+            </div>
+          ))}
+        </div>
       </section>
     </div>
   );

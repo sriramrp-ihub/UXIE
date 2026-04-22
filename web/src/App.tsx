@@ -16,6 +16,7 @@ const RoleLoginPage = lazy(() => import("./pages/auth/RoleLoginPage"));
 const StudentDashboardPage = lazy(() => import("./pages/student/StudentDashboardPage"));
 const StudentCoursesPage = lazy(() => import("./pages/student/StudentCoursesPage"));
 const StudentCourseDetailPage = lazy(() => import("./pages/student/StudentCourseDetailPage"));
+const StudentCertificatesPage = lazy(() => import("./pages/student/StudentCertificatesPage"));
 const StudentLearningPage = lazy(() => import("./pages/student/StudentLearningPage"));
 const StudentQuizPage = lazy(() => import("./pages/student/StudentQuizPage"));
 const StudentProfilePage = lazy(() => import("./pages/student/StudentProfilePage"));
@@ -54,12 +55,15 @@ function App() {
           <Route path="dashboard" element={<StudentDashboardPage />} />
           <Route path="courses" element={<StudentCoursesPage />} />
           <Route path="courses/:courseId" element={<StudentCourseDetailPage />} />
-          <Route path="learning" element={<StudentLearningPage />} />
+          <Route path="certificates" element={<StudentCertificatesPage />} />
+          <Route path="learning" element={<Navigate to="/student/courses" replace />} />
           <Route path="lesson-viewer" element={<LessonViewerPage />} />
-          <Route path="quiz" element={<StudentQuizPage />} />
+          <Route path="quiz" element={<Navigate to="/student/courses" replace />} />
           <Route path="profile" element={<StudentProfilePage />} />
           <Route path="assistant" element={<ChatbotPage />} />
           <Route path="scorm/player/:packageId" element={<ScormPlayerPage />} />
+          <Route path="legacy-learning" element={<StudentLearningPage />} />
+          <Route path="legacy-quiz" element={<StudentQuizPage />} />
         </Route>
 
         <Route path="/admin" element={<RoleProtectedRoute role="admin"><AdminLayout /></RoleProtectedRoute>}>
