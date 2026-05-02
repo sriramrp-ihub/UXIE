@@ -32,6 +32,26 @@ def course_detailed_analytics(
     return api_success(data)
 
 
+@router.get("/user/{user_id}/performance")
+def user_performance_analytics(
+    user_id: UUID,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.user_performance(db, user_id)
+    return api_success(data)
+
+
+@router.get("/questions/{course_id}")
+def course_question_analytics(
+    course_id: UUID,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    data = AnalyticsService.question_analytics(db, course_id)
+    return api_success(data)
+
+
 @router.get("/dashboard/me")
 def my_dashboard(
     user: User = Depends(get_current_user),

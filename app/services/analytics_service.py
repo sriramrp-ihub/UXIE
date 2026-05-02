@@ -1,6 +1,7 @@
 from uuid import UUID
+from datetime import datetime, timezone
 
-from sqlalchemy import distinct, func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.cache.cache_service import CacheService
@@ -9,7 +10,7 @@ from app.db.models.course import Course, Lesson, Module
 from app.db.models.enrollment import Enrollment
 from app.db.models.progress import Progress
 from app.db.models.quiz import Quiz, QuizAttempt
-from app.db.models.scorm import ScormTracking
+from app.db.models.scorm import ScormInteraction, ScormTracking
 from app.db.models.user import User
 from app.services.course_service import CourseService
 
@@ -50,23 +51,39 @@ class AnalyticsService:
             select(func.sum(ScormTracking.time_spent)).where(ScormTracking.course_id == course_id)
         ) or 0
 
+        average_time_spent = 0
+        if total_enrolled > 0:
+            average_time_spent = int(float(time_spent) / float(total_enrolled))
+
         return {
             "course_id": str(course_id),
+            "completion_rate": round(completion_pct, 2),
             "completion_percentage": round(completion_pct, 2),
             "average_score": round(float(avg_score or 0.0), 2),
+            "average_time_spent": int(average_time_spent),
             "time_spent": int(time_spent),
         }
 
     @staticmethod
     def course_detailed_analytics(db: Session, course_id: UUID) -> dict:
+        cache_key = f"analytics:course:{course_id}:detailed"
+        cached = CacheService.get_json(cache_key)
+        if cached is not None:
+            return cached
+
         course = db.get(Course, course_id)
         if not course:
-            return {
+            empty_payload = {
                 "course_id": str(course_id),
                 "course_title": None,
                 "enrolled_students": 0,
+                "completion_rate": 0.0,
+                "average_score": 0.0,
+                "average_time_spent": 0,
                 "learners": [],
             }
+            CacheService.set_json(cache_key, empty_payload, settings.cache_ttl_short)
+            return empty_payload
 
         enrolled_rows = db.execute(
             select(User.id, User.name, User.email)
@@ -161,12 +178,178 @@ class AnalyticsService:
                 }
             )
 
-        return {
+        average_score_course = db.scalar(
+            select(func.avg(QuizAttempt.score))
+            .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
+            .where(Quiz.course_id == course_id)
+        ) or 0.0
+
+        completion_rate = 0.0
+        if enrolled_rows:
+            completion_total = sum(float(row["completion_percentage"]) for row in learners)
+            completion_rate = completion_total / float(len(enrolled_rows))
+
+        average_time_spent = 0
+        if learners:
+            average_time_spent = int(
+                sum(int(row["total_time_spent"]) for row in learners) / len(learners)
+            )
+
+        payload = {
             "course_id": str(course_id),
             "course_title": course.title,
             "enrolled_students": len(enrolled_rows),
+            "completion_rate": round(completion_rate, 2),
+            "average_score": round(float(average_score_course), 2),
+            "average_time_spent": int(average_time_spent),
             "learners": learners,
         }
+        CacheService.set_json(cache_key, payload, settings.cache_ttl_short)
+        return payload
+
+    @staticmethod
+    def question_analytics(db: Session, course_id: UUID) -> dict:
+        cache_key = f"analytics:course:{course_id}:questions"
+        cached = CacheService.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        rows = db.execute(
+            select(
+                ScormInteraction.question_id,
+                func.count(ScormInteraction.id).label("attempts"),
+                func.sum(
+                    case((func.lower(ScormInteraction.result) == "correct", 1), else_=0)
+                ).label("correct_count"),
+                func.sum(
+                    case((func.lower(ScormInteraction.result) != "correct", 1), else_=0)
+                ).label("failed_count"),
+                func.avg(ScormInteraction.latency).label("avg_latency"),
+            )
+            .where(ScormInteraction.course_id == course_id)
+            .group_by(ScormInteraction.question_id)
+        ).all()
+
+        questions: list[dict] = []
+        for question_id, attempts, correct_count, failed_count, avg_latency in rows:
+            attempts_value = int(attempts or 0)
+            correct_value = int(correct_count or 0)
+            failed_value = int(failed_count or 0)
+            accuracy_pct = 0.0
+            if attempts_value > 0:
+                accuracy_pct = (float(correct_value) / float(attempts_value)) * 100.0
+
+            questions.append(
+                {
+                    "question_id": question_id,
+                    "attempts": attempts_value,
+                    "correct_count": correct_value,
+                    "failed_count": failed_value,
+                    "accuracy_percentage": round(accuracy_pct, 2),
+                    "average_latency": int(float(avg_latency or 0.0)),
+                }
+            )
+
+        most_failed_questions = sorted(
+            questions,
+            key=lambda row: row["failed_count"],
+            reverse=True,
+        )[:10]
+
+        average_latency_per_question = {
+            row["question_id"]: row["average_latency"] for row in questions
+        }
+        question_accuracy = {
+            row["question_id"]: row["accuracy_percentage"] for row in questions
+        }
+
+        payload = {
+            "course_id": str(course_id),
+            "most_failed_questions": most_failed_questions,
+            "average_latency_per_question": average_latency_per_question,
+            "question_accuracy_percentage": question_accuracy,
+            "questions": questions,
+        }
+        CacheService.set_json(cache_key, payload, settings.cache_ttl_short)
+        return payload
+
+    @staticmethod
+    def user_performance(db: Session, user_id: UUID) -> dict:
+        cache_key = f"analytics:user:{user_id}:performance"
+        cached = CacheService.get_json(cache_key)
+        if cached is not None:
+            return cached
+
+        learning_time = db.scalar(
+            select(func.sum(ScormTracking.time_spent)).where(ScormTracking.user_id == user_id)
+        ) or 0
+
+        weak_topic_rows = db.execute(
+            select(
+                ScormInteraction.question_id,
+                func.count(ScormInteraction.id).label("attempts"),
+                func.sum(
+                    case((func.lower(ScormInteraction.result) == "correct", 1), else_=0)
+                ).label("correct_count"),
+            )
+            .where(ScormInteraction.user_id == user_id)
+            .group_by(ScormInteraction.question_id)
+        ).all()
+
+        weak_topics: list[dict] = []
+        for question_id, attempts, correct_count in weak_topic_rows:
+            attempts_value = int(attempts or 0)
+            correct_value = int(correct_count or 0)
+            accuracy_pct = 0.0
+            if attempts_value > 0:
+                accuracy_pct = (float(correct_value) / float(attempts_value)) * 100.0
+            if attempts_value >= 2 and accuracy_pct < 60.0:
+                weak_topics.append(
+                    {
+                        "question_id": question_id,
+                        "attempts": attempts_value,
+                        "accuracy_percentage": round(accuracy_pct, 2),
+                    }
+                )
+
+        trend_rows = db.execute(
+            select(
+                func.date(ScormInteraction.created_at).label("day"),
+                func.count(ScormInteraction.id).label("attempts"),
+                func.sum(
+                    case((func.lower(ScormInteraction.result) == "correct", 1), else_=0)
+                ).label("correct_count"),
+            )
+            .where(ScormInteraction.user_id == user_id)
+            .group_by(func.date(ScormInteraction.created_at))
+            .order_by(func.date(ScormInteraction.created_at).asc())
+        ).all()
+
+        performance_trend: list[dict] = []
+        for day, attempts, correct_count in trend_rows:
+            attempts_value = int(attempts or 0)
+            correct_value = int(correct_count or 0)
+            accuracy_pct = 0.0
+            if attempts_value > 0:
+                accuracy_pct = (float(correct_value) / float(attempts_value)) * 100.0
+
+            performance_trend.append(
+                {
+                    "date": day.isoformat() if hasattr(day, "isoformat") else str(day),
+                    "attempts": attempts_value,
+                    "accuracy_percentage": round(accuracy_pct, 2),
+                }
+            )
+
+        payload = {
+            "user_id": str(user_id),
+            "learning_time": int(learning_time),
+            "weak_topics": weak_topics,
+            "performance_trend": performance_trend,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        CacheService.set_json(cache_key, payload, settings.cache_ttl_short)
+        return payload
 
     @staticmethod
     def user_dashboard(db: Session, user_id: UUID) -> dict:

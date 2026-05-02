@@ -33,6 +33,9 @@ class Course(Base):
     scorm_trackings = relationship(
         "ScormTracking", back_populates="course", cascade="all, delete-orphan"
     )
+    scorm_interactions = relationship(
+        "ScormInteraction", back_populates="course", cascade="all, delete-orphan"
+    )
     quizzes = relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
 
 

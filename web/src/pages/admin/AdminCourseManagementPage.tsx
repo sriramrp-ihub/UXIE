@@ -22,6 +22,20 @@ export default function AdminCourseManagementPage() {
   const structure = useCourseStructure(selectedCourseId);
 
   const [moduleForm, setModuleForm] = useState({ course_id: "", title: "", order_index: 1 });
+  const [quickScorm, setQuickScorm] = useState({
+    course_id: "",
+    module_id: "",
+    lesson_title: "",
+    scorm_title: "",
+  });
+  const [quickScormFile, setQuickScormFile] = useState<File | null>(null);
+  const [quickScormSummary, setQuickScormSummary] = useState<{
+    title: string;
+    launch_file: string;
+    activity_count: number;
+    is_single_sco: boolean;
+    health_warning?: string | null;
+  } | null>(null);
   const [lessonForm, setLessonForm] = useState({
     module_id: "",
     title: "",
@@ -50,7 +64,42 @@ export default function AdminCourseManagementPage() {
     }
     setSelectedCourseId(firstCourse.id);
     setModuleForm((p) => ({ ...p, course_id: firstCourse.id }));
+    setQuickScorm((p) => ({ ...p, course_id: firstCourse.id }));
   }, [catalog.data, selectedCourseId]);
+
+  const createScormLesson = async (moduleId: string, lessonTitle?: string) => {
+    if (!selectedCourseId || !moduleId || !quickScormFile || uploadScorm.isPending || createLesson.isPending) {
+      return;
+    }
+
+    try {
+      const form = new FormData();
+      form.append("course_id", selectedCourseId);
+      form.append("title", quickScorm.scorm_title || lessonTitle || "SCORM Lesson");
+      form.append("file", quickScormFile);
+
+      const uploaded = await uploadScorm.mutateAsync(form);
+      await createLesson.mutateAsync({
+        module_id: moduleId,
+        title: lessonTitle || quickScorm.scorm_title || uploaded.title || "SCORM Lesson",
+        content_type: "scorm",
+        content_url: uploaded.file_path,
+      });
+
+      setQuickScormSummary({
+        title: uploaded.title,
+        launch_file: uploaded.launch_file,
+        activity_count: uploaded.activity_count ?? 0,
+        is_single_sco: Boolean(uploaded.is_single_sco),
+        health_warning: uploaded.health_warning,
+      });
+      setQuickScorm((p) => ({ ...p, lesson_title: "", scorm_title: "" }));
+      setQuickScormFile(null);
+      structure.refetch();
+    } catch {
+      // errors are surfaced through mutation state
+    }
+  };
 
   const handleCreateLesson = async () => {
     if (!lessonForm.module_id || createLesson.isPending || uploadScorm.isPending) {
@@ -108,6 +157,100 @@ export default function AdminCourseManagementPage() {
         <p className="mt-1 text-sm text-slate-600">
           Primary flow: create a course, then organize it with modules. Add lessons/content only when needed.
         </p>
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">Quick SCORM Upload</h2>
+        <p className="text-sm text-slate-600">
+          If you only want to upload a SCORM ZIP, use this section. Select course and module, then upload.
+        </p>
+
+        <select
+          className="input"
+          value={quickScorm.course_id}
+          onChange={(e) => {
+            const value = e.target.value;
+            setQuickScorm((p) => ({ ...p, course_id: value, module_id: "" }));
+            setSelectedCourseId(value);
+            setModuleForm((p) => ({ ...p, course_id: value }));
+            setLessonForm((p) => ({ ...p, module_id: "" }));
+          }}
+        >
+          <option value="">Select course</option>
+          {(catalog.data ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.title}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="input"
+          value={quickScorm.module_id}
+          onChange={(e) => setQuickScorm((p) => ({ ...p, module_id: e.target.value }))}
+          disabled={!quickScorm.course_id}
+        >
+          <option value="">Select module</option>
+          {(structure.data?.modules ?? []).map((module) => (
+            <option key={module.id} value={module.id}>
+              {module.title}
+            </option>
+          ))}
+        </select>
+
+        <input
+          className="input"
+          placeholder="Lesson title (optional)"
+          value={quickScorm.lesson_title}
+          onChange={(e) => setQuickScorm((p) => ({ ...p, lesson_title: e.target.value }))}
+        />
+
+        <input
+          className="input"
+          placeholder="SCORM display title (optional)"
+          value={quickScorm.scorm_title}
+          onChange={(e) => setQuickScorm((p) => ({ ...p, scorm_title: e.target.value }))}
+        />
+
+        <input
+          className="input"
+          type="file"
+          accept=".zip"
+          onChange={(e) => setQuickScormFile(e.target.files?.[0] ?? null)}
+        />
+
+        {(structure.data?.modules?.length ?? 0) === 0 && quickScorm.course_id ? (
+          <p className="text-xs text-amber-700">No modules found in this course. Please create one in Step 2 below.</p>
+        ) : null}
+        {quickScormFile ? <p className="text-xs text-emerald-700">Ready: {quickScormFile.name}</p> : null}
+        {scormError ? <p className="text-xs text-red-600">Upload failed: {scormError}</p> : null}
+
+        <button
+          className="btn"
+          disabled={!quickScorm.course_id || !quickScorm.module_id || !quickScormFile || uploadScorm.isPending || createLesson.isPending}
+          onClick={() => createScormLesson(quickScorm.module_id, quickScorm.lesson_title)}
+        >
+          {uploadScorm.isPending || createLesson.isPending ? "Uploading..." : "Upload SCORM ZIP"}
+        </button>
+
+        {quickScormSummary ? (
+          <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
+            <p className="text-emerald-700">
+              Uploaded: {quickScormSummary.title} ({quickScormSummary.launch_file})
+            </p>
+            <p className="text-slate-700">
+              Detected SCO/activities: <span className="font-semibold">{quickScormSummary.activity_count}</span>
+            </p>
+            {quickScormSummary.is_single_sco ? (
+              <div className="rounded border border-amber-300 bg-amber-50 p-2 text-amber-800">
+                <p className="font-semibold">SCORM Package Health Warning</p>
+                <p>{quickScormSummary.health_warning ?? "Single SCO/activity detected."}</p>
+              </div>
+            ) : (
+              <p className="text-emerald-700">Health: Multi-SCO package detected.</p>
+            )}
+          </div>
+        ) : null}
       </section>
 
       <div className="grid gap-4 xl:grid-cols-2">

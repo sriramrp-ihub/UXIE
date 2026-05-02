@@ -77,6 +77,9 @@ class ScormRegistration(Base):
     runtime_data = relationship(
         "ScormRuntimeData", back_populates="registration", cascade="all, delete-orphan"
     )
+    interactions = relationship(
+        "ScormInteraction", back_populates="registration", cascade="all, delete-orphan"
+    )
 
 
 class ScormRuntimeData(Base):
@@ -130,3 +133,39 @@ class ScormTracking(Base):
     user = relationship("User", back_populates="scorm_trackings")
     course = relationship("Course", back_populates="scorm_trackings")
     lesson = relationship("Lesson", back_populates="scorm_trackings")
+
+
+class ScormInteraction(Base):
+    __tablename__ = "scorm_interactions"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    registration_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("scorm_registrations.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    course_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    interaction_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    question_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    response: Mapped[str | None] = mapped_column(String(4096), nullable=True)
+    correct_answer: Mapped[str | None] = mapped_column(String(4096), nullable=True)
+    result: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    latency: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    registration = relationship("ScormRegistration", back_populates="interactions")
+    user = relationship("User", back_populates="scorm_interactions")
+    course = relationship("Course", back_populates="scorm_interactions")

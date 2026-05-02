@@ -121,6 +121,7 @@ app.include_router(progress_router, prefix=settings.api_prefix)
 app.include_router(quiz_router, prefix=settings.api_prefix)
 app.include_router(analytics_router, prefix=settings.api_prefix)
 app.include_router(chatbot_router, prefix=settings.api_prefix)
+app.include_router(chatbot_router)
 
 app.mount("/scorm-content", StaticFiles(directory=settings.scorm_storage_dir), name="scorm-content")
 app.mount(

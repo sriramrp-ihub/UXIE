@@ -30,6 +30,9 @@ class User(Base):
     scorm_registrations = relationship(
         "ScormRegistration", back_populates="user", cascade="all, delete-orphan"
     )
+    scorm_interactions = relationship(
+        "ScormInteraction", back_populates="user", cascade="all, delete-orphan"
+    )
     progress_records = relationship(
         "Progress", back_populates="user", cascade="all, delete-orphan"
     )

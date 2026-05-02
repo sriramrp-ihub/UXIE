@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import UUID
 from datetime import datetime, timezone
 import re
+import logging
 
 from fastapi import HTTPException, UploadFile, status
 from sqlalchemy import select
@@ -14,6 +15,7 @@ from app.db.models.enrollment import Enrollment
 from app.db.models.progress import Progress
 from app.db.models.scorm import (
     ScormActivity,
+    ScormInteraction,
     ScormPackage,
     ScormRegistration,
     ScormRuntimeData,
@@ -30,6 +32,11 @@ from app.utils.file_handler import (
 
 settings = get_settings()
 RUNTIME_KEY_RE = re.compile(r"^cmi(\.|$)")
+INTERACTION_KEY_RE = re.compile(r"^cmi\.interactions\.(\d+)\.(.+)$")
+INTERACTION_CORRECT_RESPONSE_RE = re.compile(
+    r"^cmi\.interactions\.(\d+)\.correct_responses\.(\d+)\.pattern$"
+)
+logger = logging.getLogger(__name__)
 
 
 class ScormService:
@@ -270,6 +277,8 @@ class ScormService:
                 "cmi.core.score.min": "",
                 "cmi.core.score.max": "",
                 "cmi.core.session_time": "00:00:00",
+                "cmi.core.total_time": "00:00:00",
+                "cmi.core.lesson_location": "",
                 "cmi.suspend_data": "",
             }
             for key, value in defaults.items():
@@ -321,6 +330,12 @@ class ScormService:
             )
 
         registration = ScormService._get_registration_for_user(db, registration_id, user)
+        logger.debug(
+            "LMSSetValue registration_id=%s user_id=%s key=%s",
+            registration_id,
+            user.id,
+            payload.key,
+        )
         record = db.scalar(
             select(ScormRuntimeData).where(
                 ScormRuntimeData.registration_id == registration.id,
@@ -342,6 +357,18 @@ class ScormService:
         if registration.status == "NOT_STARTED":
             registration.status = "IN_PROGRESS"
 
+        package = db.get(ScormPackage, registration.package_id)
+        if package is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SCORM package not found")
+
+        ScormService._capture_interaction(
+            db=db,
+            registration=registration,
+            package=package,
+            runtime_key=payload.key,
+            runtime_value=payload.value,
+        )
+
         db.commit()
         db.refresh(record)
         return record
@@ -353,6 +380,13 @@ class ScormService:
         if package is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="SCORM package not found")
 
+        logger.debug(
+            "LMSCommit registration_id=%s user_id=%s package_id=%s",
+            registration_id,
+            user.id,
+            package.id,
+        )
+
         runtime_values = {
             row.key: row.value
             for row in db.scalars(
@@ -360,8 +394,13 @@ class ScormService:
             ).all()
         }
 
+        runtime_values = ScormService._accumulate_total_time(db, registration, runtime_values)
+
         ScormService._sync_legacy_tracking(db, user.id, package, runtime_values)
         CacheService.delete_key(f"dashboard:user:{user.id}")
+        CacheService.delete_key(f"analytics:course:{package.course_id}:detailed")
+        CacheService.delete_key(f"analytics:course:{package.course_id}:questions")
+        CacheService.delete_key(f"analytics:user:{user.id}:performance")
         CacheService.delete_key("dashboard:global")
         db.commit()
         return {"registration_id": str(registration.id), "committed": True}
@@ -379,6 +418,7 @@ class ScormService:
                 select(ScormRuntimeData).where(ScormRuntimeData.registration_id == registration.id)
             ).all()
         }
+        runtime_values = ScormService._accumulate_total_time(db, registration, runtime_values)
 
         if ScormService._runtime_indicates_completion(runtime_values):
             registration.status = "COMPLETED"
@@ -391,6 +431,9 @@ class ScormService:
         ScormService._sync_legacy_tracking(db, user.id, package, runtime_values)
         ScormService._sync_lms_progress(db, user.id, package, registration.status)
         CacheService.delete_key(f"dashboard:user:{user.id}")
+        CacheService.delete_key(f"analytics:course:{package.course_id}:detailed")
+        CacheService.delete_key(f"analytics:course:{package.course_id}:questions")
+        CacheService.delete_key(f"analytics:user:{user.id}:performance")
         CacheService.delete_key("dashboard:global")
         db.add(registration)
         db.commit()
@@ -448,8 +491,8 @@ class ScormService:
             or runtime_values.get("cmi.success_status")
             or "incomplete"
         )
-        session_time = runtime_values.get("cmi.core.session_time") or "00:00:00"
-        time_spent = ScormService._parse_scorm_time_to_seconds(session_time)
+        total_time = runtime_values.get("cmi.core.total_time") or "00:00:00"
+        time_spent = ScormService._parse_scorm_time_to_seconds(total_time)
 
         tracking = db.scalar(
             select(ScormTracking).where(
@@ -486,16 +529,157 @@ class ScormService:
 
     @staticmethod
     def _parse_scorm_time_to_seconds(value: str) -> int:
-        parts = value.split(":")
+        if not value:
+            return 0
+
+        parts = value.strip().split(":")
         if len(parts) != 3:
             return 0
         try:
             hours = int(parts[0])
             minutes = int(parts[1])
-            seconds = int(float(parts[2]))
+            seconds = float(parts[2])
         except ValueError:
             return 0
-        return max(0, (hours * 3600) + (minutes * 60) + seconds)
+        return max(0, int((hours * 3600) + (minutes * 60) + seconds))
+
+    @staticmethod
+    def _format_seconds_to_scorm_time(seconds: int) -> str:
+        safe_seconds = max(0, int(seconds))
+        hours = safe_seconds // 3600
+        minutes = (safe_seconds % 3600) // 60
+        secs = safe_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+    @staticmethod
+    def _upsert_runtime_value(db: Session, registration_id: UUID, key: str, value: str) -> None:
+        runtime_record = db.scalar(
+            select(ScormRuntimeData).where(
+                ScormRuntimeData.registration_id == registration_id,
+                ScormRuntimeData.key == key,
+            )
+        )
+        if runtime_record is None:
+            db.add(ScormRuntimeData(registration_id=registration_id, key=key, value=value))
+            return
+
+        runtime_record.value = value
+        db.add(runtime_record)
+
+    @staticmethod
+    def _accumulate_total_time(
+        db: Session,
+        registration: ScormRegistration,
+        runtime_values: dict[str, str],
+    ) -> dict[str, str]:
+        session_seconds = ScormService._parse_scorm_time_to_seconds(
+            runtime_values.get("cmi.core.session_time") or "00:00:00"
+        )
+        total_seconds = ScormService._parse_scorm_time_to_seconds(
+            runtime_values.get("cmi.core.total_time") or "00:00:00"
+        )
+        try:
+            last_committed_session_seconds = int(
+                runtime_values.get("cmi._uxie.last_committed_session_seconds") or "0"
+            )
+        except ValueError:
+            last_committed_session_seconds = 0
+
+        if session_seconds >= last_committed_session_seconds:
+            delta = session_seconds - last_committed_session_seconds
+        else:
+            delta = session_seconds
+
+        aggregated_total_seconds = max(0, total_seconds + max(0, delta))
+        aggregated_total_time = ScormService._format_seconds_to_scorm_time(aggregated_total_seconds)
+
+        ScormService._upsert_runtime_value(
+            db,
+            registration.id,
+            "cmi.core.total_time",
+            aggregated_total_time,
+        )
+        ScormService._upsert_runtime_value(
+            db,
+            registration.id,
+            "cmi._uxie.last_committed_session_seconds",
+            str(session_seconds),
+        )
+
+        runtime_values["cmi.core.total_time"] = aggregated_total_time
+        runtime_values["cmi._uxie.last_committed_session_seconds"] = str(session_seconds)
+        return runtime_values
+
+    @staticmethod
+    def _capture_interaction(
+        db: Session,
+        registration: ScormRegistration,
+        package: ScormPackage,
+        runtime_key: str,
+        runtime_value: str,
+    ) -> None:
+        interaction_match = INTERACTION_KEY_RE.match(runtime_key)
+        interaction_correct_match = INTERACTION_CORRECT_RESPONSE_RE.match(runtime_key)
+        if interaction_match is None and interaction_correct_match is None:
+            return
+
+        if interaction_correct_match is not None:
+            interaction_index = interaction_correct_match.group(1)
+            field_name = "correct_response"
+        else:
+            interaction_index, field_name = interaction_match.group(1), interaction_match.group(2)
+
+        runtime_values = {
+            row.key: row.value
+            for row in db.scalars(
+                select(ScormRuntimeData).where(ScormRuntimeData.registration_id == registration.id)
+            ).all()
+        }
+
+        raw_interaction_id = runtime_values.get(f"cmi.interactions.{interaction_index}.id")
+        interaction_id = (raw_interaction_id or f"idx-{interaction_index}").strip()
+        synthetic_interaction_id = f"idx-{interaction_index}"
+
+        interaction = db.scalar(
+            select(ScormInteraction).where(
+                ScormInteraction.registration_id == registration.id,
+                ScormInteraction.interaction_id.in_({interaction_id, synthetic_interaction_id}),
+            )
+        )
+
+        if interaction is None:
+            interaction = ScormInteraction(
+                registration_id=registration.id,
+                course_id=package.course_id,
+                user_id=registration.user_id,
+                interaction_id=interaction_id,
+                question_id=interaction_id,
+            )
+
+        question_id_value = runtime_values.get(f"cmi.interactions.{interaction_index}.id")
+        if question_id_value:
+            interaction.question_id = question_id_value
+            interaction.interaction_id = question_id_value
+
+        if field_name in {"student_response", "learner_response"}:
+            interaction.response = runtime_value
+        elif field_name == "result":
+            interaction.result = (runtime_value or "").strip().lower() or None
+        elif field_name.startswith("correct_responses") or field_name == "correct_response":
+            interaction.correct_answer = runtime_value
+        elif field_name == "latency":
+            interaction.latency = ScormService._parse_scorm_time_to_seconds(runtime_value)
+        elif field_name == "id" and runtime_value.strip():
+            interaction.question_id = runtime_value.strip()
+            interaction.interaction_id = runtime_value.strip()
+
+        logger.debug(
+            "SCORM interaction captured registration_id=%s interaction_id=%s field=%s",
+            registration.id,
+            interaction.interaction_id,
+            field_name,
+        )
+        db.add(interaction)
 
     @staticmethod
     def get_registration_report(db: Session, registration_id: UUID, user: User) -> dict:
@@ -524,8 +708,8 @@ class ScormService:
         except ValueError:
             score = None
 
-        session_time = runtime_values.get("cmi.core.session_time") or "00:00:00"
-        time_spent = ScormService._parse_scorm_time_to_seconds(session_time)
+        total_time = runtime_values.get("cmi.core.total_time") or "00:00:00"
+        time_spent = ScormService._parse_scorm_time_to_seconds(total_time)
 
         return {
             "completion": completion,

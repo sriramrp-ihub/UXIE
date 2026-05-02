@@ -5,6 +5,7 @@ from app.db.models.progress import Progress
 from app.db.models.quiz import Question, Quiz, QuizAttempt
 from app.db.models.scorm import (
     ScormActivity,
+    ScormInteraction,
     ScormPackage,
     ScormRegistration,
     ScormRuntimeData,
@@ -21,6 +22,7 @@ __all__ = [
     "Enrollment",
     "ScormPackage",
     "ScormActivity",
+    "ScormInteraction",
     "ScormRegistration",
     "ScormRuntimeData",
     "ScormTracking",
