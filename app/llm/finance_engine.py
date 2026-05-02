@@ -28,7 +28,7 @@ _UNSAFE_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 
 _DISCLAIMER_BY_INTENT: dict[str, str] = {
-    "investment": "Risk disclaimer: Investment values and returns can fluctuate; evaluate suitability before investing.",
+    "investment": "For personalised advice, please consult a certified financial advisor or your bank directly.",
     "lending": "Note: Loan terms, rates, and eligibility vary by lender and borrower profile.",
     "insurance": "Note: Coverage, exclusions, and claim outcomes depend on policy wording and underwriting.",
     "calculation": "Note: This is an illustrative estimate, not financial advice.",
@@ -102,10 +102,7 @@ def _sanitize_unsafe_claims(response: str) -> str:
 
 
 def _ensure_educational_tone(response: str) -> str:
-    lowered = response.lower()
-    if "educational" in lowered or "for informational purposes" in lowered:
-        return response
-    return f"For educational purposes: {response}"
+    return response
 
 
 def _format_as_steps(text: str) -> str:
@@ -118,7 +115,7 @@ def _format_as_steps(text: str) -> str:
         sentences = [part.strip() for part in re.split(r"(?<=[.!?])\s+", lines[0]) if part.strip()]
     else:
         sentences = lines
-    steps = [f"{idx}. {sentence}" for idx, sentence in enumerate(sentences[:6], start=1)]
+    steps = [f"{idx}. {sentence}" for idx, sentence in enumerate(sentences[:8], start=1)]
     return "\n".join(steps)
 
 
@@ -151,7 +148,7 @@ def _append_disclaimer_if_needed(text: str, intent: str) -> str:
 
 def apply_finance_output_logic(response: str, logic: FinanceLogic) -> str:
     """Apply post-LLM finance-safe output transformations."""
-    text = truncate_text(normalize_text(response), max_chars=2400)
+    text = truncate_text(normalize_text(response), max_chars=3000)
     if not text:
         return "I could not generate a reliable finance response. Please rephrase your question."
 
@@ -162,7 +159,7 @@ def apply_finance_output_logic(response: str, logic: FinanceLogic) -> str:
 
     text = _apply_format(text, str(logic.get("format", "simple")))
     text = _append_disclaimer_if_needed(text, str(logic.get("intent", "general")))
-    return truncate_text(text, max_chars=2600)
+    return truncate_text(text, max_chars=3200)
 
 
 def try_compute_finance_calculation(query: str) -> str | None:

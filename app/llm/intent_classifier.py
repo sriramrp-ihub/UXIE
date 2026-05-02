@@ -22,7 +22,7 @@ _client = LLMClient()
 CLASSIFICATION_PROMPT_TEMPLATE = """
 Classify BFSI intent.
 Return exactly one token: IN_SCOPE or OUT_OF_SCOPE.
-IN_SCOPE = banking, finance, insurance, payments, compliance, risk, investment, economics.
+IN_SCOPE = banking, finance, insurance, payments, compliance, risk, investment, money, interest, loans, cards, accounts, savings, deposits, withdrawals, UPI, NEFT, RTGS, IMPS, KYC, AML, budgeting, taxation, and related BFSI topics.
 OUT_OF_SCOPE = all other domains.
 Query: {query}
 """.strip()

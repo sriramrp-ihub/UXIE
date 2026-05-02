@@ -25,6 +25,34 @@ def sanitize_telegram_text(text: str) -> str:
     """Normalize LLM markdown-heavy output into plain Telegram-friendly text."""
     value = (text or "").strip()
 
+    # Remove prompt-echo artifacts that sometimes leak into model output.
+    noisy_prefixes = (
+        "intent context:",
+        "answer style:",
+        "output contract:",
+        "tone:",
+        "format:",
+        "user question:",
+        "out-of-scope fallback:",
+        "for educational purposes:",
+    )
+    lines: list[str] = []
+    for raw_line in value.splitlines():
+        stripped = raw_line.strip()
+        lowered = stripped.lower()
+        if not stripped:
+            lines.append("")
+            continue
+        matched_prefix = next((prefix for prefix in noisy_prefixes if lowered.startswith(prefix)), None)
+        if matched_prefix:
+            remainder = stripped[len(matched_prefix) :].lstrip(" :-")
+            if remainder:
+                lines.append(remainder)
+            continue
+        lines.append(raw_line)
+
+    value = "\n".join(lines).strip()
+
     # Convert markdown headings and emphasis into plain text.
     value = re.sub(r"^#{1,6}\s*", "", value, flags=re.MULTILINE)
     value = re.sub(r"\*\*(.*?)\*\*", r"\1", value)

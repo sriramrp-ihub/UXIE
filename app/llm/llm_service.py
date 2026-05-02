@@ -73,7 +73,7 @@ class LLMService:
     async def _generate_via_llm(self, query: str, logic: dict[str, str | bool]) -> str:
         prompt = build_prompt(query, logic)
         try:
-            response = await self.client.call_llm(prompt, max_output_tokens=420)
+            response = await self.client.call_llm(prompt, max_output_tokens=600)
             return apply_finance_output_logic(response or OUT_OF_SCOPE_MESSAGE, logic)
         except Exception as exc:  # nosec B110
             logger.warning("LLM call failed: %s", exc)

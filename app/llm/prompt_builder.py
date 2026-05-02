@@ -12,26 +12,22 @@ def build_prompt(query: str, logic: dict[str, str | bool]) -> str:
     cleaned = truncate_text(normalize_text(query), max_chars=2000)
     intent = str(logic.get("intent", "general"))
     response_format = str(logic.get("format", "simple"))
-    tone = str(logic.get("tone", "educational"))
 
-    output_instruction = (
-        "Output contract:\n"
-        f"- Intent context: {intent}\n"
-        f"- Tone: {tone}\n"
-        f"- Format: {response_format}\n"
-        "- Keep answer concise, practical, and avoid absolute guarantees.\n"
-    )
-
-    if response_format == "steps":
-        output_instruction += "- Return a numbered step-by-step answer.\n"
-    elif response_format == "comparison":
-        output_instruction += "- Return a side-by-side comparison with key differences.\n"
+    extra_instruction = ""
+    if intent == "comparison":
+        extra_instruction = "Compare the items side by side and highlight key differences."
+    elif response_format == "steps":
+        extra_instruction = "Explain the answer in numbered steps or bullets if that makes it clearer."
+    elif intent == "definition":
+        extra_instruction = "Give a simple educational definition first, then add a short explanation if useful."
+    elif intent == "calculation":
+        extra_instruction = "Provide the calculation clearly and keep any explanation brief."
     else:
-        output_instruction += "- Return a direct plain-language explanation.\n"
+        extra_instruction = "Answer naturally in a clear, educational way."
 
     return (
         f"{DEFAULT_SYSTEM_INSTRUCTIONS}\n\n"
-        f"{output_instruction}\n"
+        f"{extra_instruction}\n"
         f"Out-of-scope fallback: {OUT_OF_SCOPE_MESSAGE}\n\n"
         f"User Question: {cleaned}"
     )

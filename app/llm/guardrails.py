@@ -9,6 +9,16 @@ from app.llm.utils import normalize_text
 _BFSI_ALLOWED_TOPICS_LOWER: tuple[str, ...] = tuple(topic.lower() for topic in BFSI_ALLOWED_TOPICS)
 logger = logging.getLogger(__name__)
 
+_GREETING_TOKENS: tuple[str, ...] = (
+    "hi",
+    "hello",
+    "hey",
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "namaste",
+)
+
 
 def _is_bfsi_query_lower(lowered: str) -> bool:
     """Fast keyword match assuming input is already normalized + lowercase."""
@@ -21,6 +31,8 @@ def is_bfsi_query(query: str) -> bool:
     Note: This can be replaced by classifier-based validation later.
     """
     lowered = normalize_text(query).lower()
+    if any(lowered == token or lowered.startswith(f"{token} ") for token in _GREETING_TOKENS):
+        return True
     return _is_bfsi_query_lower(lowered)
 
 
@@ -35,7 +47,11 @@ async def validate_query(query: str) -> tuple[bool, str | None]:
     if not cleaned:
         return False, EMPTY_QUERY_MESSAGE
 
-    if _is_bfsi_query_lower(cleaned.lower()):
+    lowered = cleaned.lower()
+    if any(lowered == token or lowered.startswith(f"{token} ") for token in _GREETING_TOKENS):
+        return True, None
+
+    if _is_bfsi_query_lower(lowered):
         return True, None
 
     intent = await classify_query(cleaned)
