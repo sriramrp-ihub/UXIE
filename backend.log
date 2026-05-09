@@ -1,0 +1,72 @@
+INFO:     Will watch for changes in these directories: ['/Users/user/UXIE_0.1']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [63143] using WatchFiles
+INFO:     Started server process [63161]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+(trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/Users/user/UXIE_0.1/.venv/lib/python3.12/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+              ^^^^^^^^^^^^^^^^^
+AttributeError: module 'bcrypt' has no attribute '__about__'
+INFO:     127.0.0.1:61969 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
+INFO:     127.0.0.1:62139 - "POST /api/v1/auth/login HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:62326 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64789 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64795 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64799 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64807 - "GET /api/v1/my-courses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64808 - "GET /api/v1/analytics/time-spent/f2125a73-ea74-44f7-8a58-96abb3ee496e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64806 - "GET /api/v1/analytics/dashboard/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64818 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64817 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64880 - "GET /api/v1/courses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64890 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:64888 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64889 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64911 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:65018 - "GET /api/v1/users/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65023 - "GET /api/v1/analytics/dashboard/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65024 - "GET /api/v1/my-courses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65025 - "GET /api/v1/analytics/time-spent/f2125a73-ea74-44f7-8a58-96abb3ee496e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65026 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65027 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65224 - "GET /api/v1/courses/3908bb85-14ca-42f5-8eee-3b59952b8960/structure HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65225 - "GET /api/v1/scorm/course/3908bb85-14ca-42f5-8eee-3b59952b8960/packages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65222 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65223 - "GET /api/v1/courses/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65231 - "POST /api/v1/scorm/eac0551c-9cb1-4ed1-a74b-03ddbd2d3e07/initialize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65283 - "GET /scorm-content/7976fae4-3e43-4a18-a782-3e688455f4f0/scormdriver/indexAPI.html HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:65368 - "GET /api/v1/courses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65376 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:65377 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65378 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65397 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:65443 - "POST /api/v1/scorm/eac0551c-9cb1-4ed1-a74b-03ddbd2d3e07/initialize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65480 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:65499 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 403 Forbidden
+INFO:     127.0.0.1:65504 - "POST /api/v1/enroll/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 201 Created
+INFO:     127.0.0.1:65507 - "GET /api/v1/my-courses HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65532 - "GET /api/v1/courses/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6/structure HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65531 - "GET /api/v1/scorm/course/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6/packages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65529 - "GET /api/v1/courses/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65530 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65535 - "POST /api/v1/scorm/8553addb-da7e-453d-a8c9-4c139e7afe88/initialize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49172 - "GET /scorm-content/10b31edc-ab17-4310-be30-a07ddba39e76/scormdriver/indexAPI.html HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49218 - "GET /api/v1/analytics/time-spent/f2125a73-ea74-44f7-8a58-96abb3ee496e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49220 - "GET /api/v1/progress/3908bb85-14ca-42f5-8eee-3b59952b8960 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49219 - "GET /api/v1/progress/5cf0cb60-c053-4aeb-8193-3d80f7b14ac6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49217 - "GET /api/v1/analytics/dashboard/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49221 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49319 - "GET /api/v1/courses/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24/structure HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49321 - "GET /api/v1/scorm/course/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24/packages HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49320 - "GET /api/v1/courses/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49318 - "GET /api/v1/progress/d8c6bc8b-bcf0-48b0-b8dd-44f5b732ab24 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49324 - "POST /api/v1/scorm/f5b1bff2-71df-424a-85f0-b99108faa732/initialize HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49349 - "GET /scorm-content/3c07a538-e5eb-4153-aa3d-bf965aa2c3d6/scormdriver/indexAPI.html HTTP/1.1" 404 Not Found
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [63161]
+INFO:     Stopping reloader process [63143]
