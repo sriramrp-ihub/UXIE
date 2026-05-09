@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""
 
     model_config = SettingsConfigDict(env_file=str(ENV_FILE), env_file_encoding="utf-8")
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def normalize_debug(cls, value):
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"1", "true", "yes", "on", "debug", "development", "dev"}:
+                return True
+            if normalized in {"0", "false", "no", "off", "release", "production", "prod"}:
+                return False
+        return value
 
     def model_post_init(self, __context) -> None:  # type: ignore[override]
         scorm_path = Path(self.scorm_storage_dir)

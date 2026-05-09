@@ -15,6 +15,12 @@ interface ScormApiBridge {
 
 const MAX_RUNTIME_VALUE_LENGTH = 4000;
 
+function resolveScormOrigin(): string {
+  // Always use frontend origin for SCORM content because Vite proxies /scorm-content to backend
+  // This ensures iframe is same-origin with parent window, allowing API object access
+  return window.location.origin;
+}
+
 function normalizeRuntimeValue(value: unknown): string {
   const text = String(value ?? "");
   return text.length > MAX_RUNTIME_VALUE_LENGTH ? text.slice(0, MAX_RUNTIME_VALUE_LENGTH) : text;
@@ -62,7 +68,7 @@ export function useScormPlayer(packageId: string, frameRef: React.RefObject<HTML
         resolvedPath = `${parsed.pathname}${parsed.search}${parsed.hash}`;
       }
       const normalizedLaunch = resolvedPath.startsWith("/") ? resolvedPath : `/${resolvedPath}`;
-      const url = `${window.location.origin}${normalizedLaunch}`;
+      const url = `${resolveScormOrigin()}${normalizedLaunch}`;
       setCurrentLaunchUrl(url);
       setStatus(`SCORM initialized (${initialized.session_id})`);
     };
