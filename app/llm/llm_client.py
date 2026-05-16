@@ -77,12 +77,19 @@ class LLMClient:
         if not candidates:
             return ""
 
-        parts = candidates[0].get("content", {}).get("parts", [])
+        candidate = candidates[0]
+        parts = candidate.get("content", {}).get("parts", [])
         if not parts:
             return ""
 
         text_fragments = [part.get("text", "") for part in parts if isinstance(part, dict)]
-        return "\n".join(fragment.strip() for fragment in text_fragments if fragment).strip()
+        text = "\n".join(fragment.strip() for fragment in text_fragments if fragment).strip()
+
+        finish_reason = str(candidate.get("finishReason", "")).upper()
+        if finish_reason == "MAX_TOKENS" and text:
+            text = f"{text}\n\nReply truncated due to response length. Ask me to continue."
+
+        return text
 
 
     async def call_llm(

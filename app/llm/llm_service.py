@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 _RESPONSE_CACHE_TTL_SECONDS = 180
 _RESPONSE_CACHE_MAX_ENTRIES = 512
 _INFLIGHT_WAIT_TIMEOUT_SECONDS = 25.0
+_DEFAULT_MAX_OUTPUT_TOKENS = 1000
 
 _response_cache: dict[str, tuple[str, float]] = {}
 _inflight_requests: dict[str, asyncio.Future[str]] = {}
@@ -73,7 +74,10 @@ class LLMService:
     async def _generate_via_llm(self, query: str, logic: dict[str, str | bool]) -> str:
         prompt = build_prompt(query, logic)
         try:
-            response = await self.client.call_llm(prompt, max_output_tokens=600)
+            response = await self.client.call_llm(
+                prompt,
+                max_output_tokens=_DEFAULT_MAX_OUTPUT_TOKENS,
+            )
             return apply_finance_output_logic(response or OUT_OF_SCOPE_MESSAGE, logic)
         except Exception as exc:  # nosec B110
             logger.warning("LLM call failed: %s", exc)
