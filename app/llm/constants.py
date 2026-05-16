@@ -3,8 +3,11 @@
 BFSI_ALLOWED_TOPICS: tuple[str, ...] = (
     "money",
     "interest",
+    "interest rate",
+    "rate of interest",
     "bank",
     "banking",
+    "bank branch",
     "finance",
     "financial",
     "insurance",
@@ -22,6 +25,9 @@ BFSI_ALLOWED_TOPICS: tuple[str, ...] = (
     "net banking",
     "mobile banking",
     "atm",
+    "cash withdrawal",
+    "cash deposit",
+    "bank locker",
     "payments",
     "upi",
     "neft",
@@ -92,7 +98,9 @@ Handling input:
 
 Response format:
 - Keep answers educational, clear, and structured.
-- Use bullet points or numbered lists for multi-part answers.
+- Keep answers concise and learner-friendly, usually under 160 words unless the user asks for detail.
+- Use short bullet points or numbered lists for multi-part answers.
+- Do not use markdown symbols like #, *, **, backticks, or tables.
 - For product or investment advice, end with: "For personalised advice, please consult a certified financial advisor or your bank directly."
 - Default to Indian context where helpful (RBI, INR, UPI, SBI, HDFC, etc.).
 
